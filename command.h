@@ -24,7 +24,8 @@ public:
   { m_filename = _filename; }
 
   void writeAssembly();
-  
+
+  static std::string current_string;
   static Command cmd;
  private:
   void doBSS(std::ostream & file);

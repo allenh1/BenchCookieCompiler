@@ -32,6 +32,14 @@ void myunputc(int c) {
 "please?" return READ;
 ">" return GREAT;
 "done!" return DONE;
+\"(\\.|[^"])*\" {
+     char * p;
+     for (p = yytext + 1; *p && *p != '\"'; ++p);
+     yylval.string_val = (char*) calloc(p - yytext, sizeof(char));
+     strncpy(yylval.string_val, yytext + 1, p - (yytext + 1));
+     std::cout<<"literal string: \""<<yylval.string_val<<"\""<<std::endl;
+     return STRING_LITERALLY;
+}
 
 [^ ^|\t\n]*[^ ^|\t\n]*  {
     yylval.string_val = (char*) calloc(strlen(yytext) + 1, sizeof(char));

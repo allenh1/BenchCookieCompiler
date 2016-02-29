@@ -16,6 +16,7 @@
 
 %token PRINT_STRING INT READ GREAT STRING DONE
 %token PRINT_INT WHAAAT PRINT_THIS NOTOKEN
+%token <string_val> STRING_LITERALLY
 
 %union	{
 	char * string_val;
@@ -88,7 +89,7 @@ print_string:
     ;
 
 print_literal:
-    PRINT_THIS WORD WHAAAT {
+    PRINT_THIS STRING_LITERALLY WHAAAT {
       // std::cerr<<"You want me to say WHAAAT?"<<std::endl;
       Command::cmd.addPrintLiteral($2);
     }

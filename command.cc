@@ -31,7 +31,7 @@ void Command::addPrintInt(char * _int)
 void Command::addPrintString(char * arg){}
 
 void Command::addPrintLiteral(char * arg)
-{ m_literals.push_back(std::string(arg) + "\\n"); }
+{ m_literals.push_back(std::string(arg)); }
 
 void Command::addReadInt(char * arg){}
 
