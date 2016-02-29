@@ -32,7 +32,7 @@ Example:
 We have a data type for the labels, called a pick-list. The pick list is initialized as seen below, where
 the function that decides what's chosen is a parameter for the pick-list.
  
-''''
+```
 func [arg1, arg2, ... ] picker;
 
 pick-list list(picker);
@@ -48,11 +48,10 @@ pick from list {
   .
   .
 }
-''''
-
+```
 Comments:
 ---------
-'''
+```
  @;
   ; Block comments look like this
   ; and just kinda keep going.
@@ -62,31 +61,31 @@ Comments:
 @ This is a line comment
 print "Hallo, there!\n"?
 ; This is also a line comment.
-'''
+```
 
 Output Statements:
 -----------------
 There are two types of print statements.
 
-*Print literals:*
+**Print literals:**
 
-'''
+```
  print "literally what you want to say\n" ?
-'''
+```
 
-*Print values:*
+**Print values:**
 
-'''
+```
  print_<typename> varname ?
-'''
+```
 
 Input Statments:
 ----------------
 There is a general syntax for input.
 
-'''
+```
 <typename> please ? > varname
-'''
+```
 
 This reads a typename from stdin and puts it, nicely, in varname.
 
