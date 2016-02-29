@@ -7,10 +7,10 @@ Status:
 -------
 It prints stuff that is one word to the screen. To use, though, one does this.
 
-'''
+```
     $ ./bcc out.s < source.bc
     $ gcc out.s -o out
-'''
+```
 
 ToDo:
 -----
@@ -32,7 +32,7 @@ Example:
 We have a data type for the labels, called a pick-list. The pick list is initialized as seen below, where
 the function that decides what's chosen is a parameter for the pick-list.
  
-'''
+''''
 func [arg1, arg2, ... ] picker;
 
 pick-list list(picker);
@@ -48,7 +48,7 @@ pick from list {
   .
   .
 }
-'''
+''''
 
 Comments:
 ---------
