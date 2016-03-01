@@ -52,7 +52,7 @@ void Command::doData(std::ostream & file)
   for (int x = 0; x < m_literals.size(); ++x) {
     file<<"S"<<x<<":\t.ascii \""<<m_literals[x]<<"\\0\""<<std::endl;
   }
-  file<<std::endl<<"string_fmt:\t.ascii \"%s\"\\0"<<std::endl;
+  file<<std::endl<<"string_fmt:\t.ascii \"%s\\0\""<<std::endl;
 }
 
 void Command::doMain(std::ostream & file)
@@ -65,7 +65,7 @@ void Command::doMain(std::ostream & file)
 
   for (int x = 0, stringdex = 0, intdex = 0, pstringdex = 0, litdex = 0; x < m_execOrder.size(); ++x) {
     if (m_execOrder[x] == cmd_type::READ_STRING) {
-      file<<"\tldr %r0, string_fmt"<<std::endl;
+      file<<"\tldr %r0, =string_fmt"<<std::endl;
       file<<"\tldr %r1, =IS"<<stringdex<<std::endl;
       file<<"\tbl scanf"<<std::endl;
       file<<std::endl;
@@ -78,7 +78,7 @@ void Command::doMain(std::ostream & file)
       file<<"\tldr %r0, =S"<<litdex++<<std::endl;
       file<<"\tbl printf"<<std::endl<<std::endl;
     } else if (m_execOrder[x] == cmd_type::PRINT_STR) {
-      file<<"\tldr %r0, string_fmt"<<std::endl;
+      file<<"\tldr %r0, =string_fmt"<<std::endl;
       for (y = 0; y < m_string_vars.size(); ++y) {
         if (m_string_vars[y] == m_print_strings[pstringdex]) 
           break;
@@ -88,6 +88,7 @@ void Command::doMain(std::ostream & file)
       }
 
       file<<"\tldr %r1, =IS"<<pstringdex<<std::endl;
+      file<<"\tbl printf"<<std::endl;
       ++pstringdex;
     }
   }
