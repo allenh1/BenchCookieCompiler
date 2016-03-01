@@ -8,21 +8,7 @@
 
 void Command::addPrintInt(char * _int)
 {
-  std::string as_string(_int);
-  bool has = false;
-  
-  auto contains = [&has, this] (std::string s) -> bool {
-    for (int x = 0; x < m_int_vars.size(); ++x) {
-      if (m_int_vars[x] == s) return has = true;
-    } return has = false;
-  };
-
-  auto p = contains(as_string);
-  if (!has) {
-    std::cerr<<"Error: variable "<<as_string;
-    std::cerr<<" has not been declared!"<<std::endl;
-    exit(1);
-  }
+  m_print_int.push_back(std::string(_int)); m_execOrder.push_back(cmd_type::PRINT_INT); 
 }
 
 void Command::addPrintString(char * arg)
@@ -31,7 +17,8 @@ void Command::addPrintString(char * arg)
 void Command::addPrintLiteral(char * arg)
 {      m_literals.push_back(std::string(arg)); m_execOrder.push_back(cmd_type::PRINT); }
 
-void Command::addReadInt(char * arg){}
+void Command::addReadInt(char * arg)
+{ m_int_vars.push_back(std::string(arg)); m_execOrder.push_back(cmd_type::READ_INT); }
 
 void Command::addReadString(char * arg)
 { m_string_vars.push_back(std::string(arg)); m_execOrder.push_back(cmd_type::READ_STRING); }
@@ -52,7 +39,7 @@ void Command::doData(std::ostream & file)
   for (int x = 0; x < m_literals.size(); ++x) {
     file<<"S"<<x<<":\t.ascii \""<<m_literals[x]<<"\\0\""<<std::endl;
   }
-  file<<std::endl<<"string_fmt:\t.ascii \"%s\"\\0"<<std::endl;
+  file<<std::endl<<"string_fmt:\t.ascii \"%s\\0\""<<std::endl;
 }
 
 void Command::doMain(std::ostream & file)
@@ -65,7 +52,7 @@ void Command::doMain(std::ostream & file)
 
   for (int x = 0, stringdex = 0, intdex = 0, pstringdex = 0, litdex = 0; x < m_execOrder.size(); ++x) {
     if (m_execOrder[x] == cmd_type::READ_STRING) {
-      file<<"\tldr %r0, string_fmt"<<std::endl;
+      file<<"\tldr %r0, =string_fmt"<<std::endl;
       file<<"\tldr %r1, =IS"<<stringdex<<std::endl;
       file<<"\tbl scanf"<<std::endl;
       file<<std::endl;
@@ -78,7 +65,7 @@ void Command::doMain(std::ostream & file)
       file<<"\tldr %r0, =S"<<litdex++<<std::endl;
       file<<"\tbl printf"<<std::endl<<std::endl;
     } else if (m_execOrder[x] == cmd_type::PRINT_STR) {
-      file<<"\tldr %r0, string_fmt"<<std::endl;
+      file<<"\tldr %r0, =string_fmt"<<std::endl;
       for (y = 0; y < m_string_vars.size(); ++y) {
         if (m_string_vars[y] == m_print_strings[pstringdex]) 
           break;
@@ -88,6 +75,7 @@ void Command::doMain(std::ostream & file)
       }
 
       file<<"\tldr %r1, =IS"<<pstringdex<<std::endl;
+      file<<"\tbl printf"<<std::endl;
       ++pstringdex;
     }
   }
@@ -122,8 +110,15 @@ void Command::writeAssembly()
   doMain(file);
   
   file<<std::endl;
+  file<<"\tmov %r0, $0"<<std::endl;
+  /**
+   * @DrewBarthel: printf is a toilet.
+   */
+  file<<"\tbl fflush"<<std::endl;
   file<<"\tmov %r7, $1"<<std::endl;
-
+  /**
+   * Toilet has been flushed
+   */
 
   file<<"\tswi $0"<<std::endl;
   file<<"\t.end"<<std::endl;
