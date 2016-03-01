@@ -8,7 +8,7 @@
 
 void Command::addPrintInt(char * _int)
 {
-  m_print_int.push_back(std::string(_int)); m_execOrder.push_back(cmd_type::PRINT_INT); 
+  m_print_ints.push_back(std::string(_int)); m_execOrder.push_back(cmd_type::PRINT_NUM); 
 }
 
 void Command::addPrintString(char * arg)
