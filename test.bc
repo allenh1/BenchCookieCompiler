@@ -1,2 +1,17 @@
-print Hallo_der ?
-FUCK
+func main()
+{
+	print "Hello, there!\n" ?
+	print "What are you doing tonight?\n" ?
+	string please? > resp
+	func picker (arg) = [
+		"one" when ["good", "great", "delicious"] contains arg,
+		"two" when ["bad", "horrible", "a no-no"] contains arg,
+		"three" when arg contains [],
+	]
+
+	pick from picker(resp) {
+		"one" ? print "Good to hear it!\n" ?
+		"two" ? print "Well that sucks.\n" ?
+		"three" ? print "Da fuck you say?\n" ?
+	}
+}

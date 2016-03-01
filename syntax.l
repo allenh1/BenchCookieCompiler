@@ -13,7 +13,7 @@
 #include <iostream>
 #include "y.tab.h"
 
-static  void yyunput (int c,char *buf_ptr  );
+static  void yyunput (int c, char * buf_ptr);
 
 void myunputc(int c) {
     unput(c);
@@ -29,16 +29,23 @@ void myunputc(int c) {
 "?" { return WHAAAT; }
 "int"  return INT;
 "string" return STRING;
+"done!" return DONE;
 "please?" return READ;
 ">" return GREAT;
-"done!" return DONE;
-\"(\\.|[^"])*\" {
-     char * p;
-     for (p = yytext + 1; *p && *p != '\"'; ++p);
-     yylval.string_val = (char*) calloc(p - yytext, sizeof(char));
-     strncpy(yylval.string_val, yytext + 1, p - (yytext + 1));
-     std::cout<<"literal string: \""<<yylval.string_val<<"\""<<std::endl;
-     return STRING_LITERALLY;
+"}" return EBRACE;
+"{" return OBRACE;
+"func" return FUNC;
+"(" return OPAREN;
+")" return EPAREN;
+"[" return OBRACKET;
+"]" return EBRACKET;
+
+\"(\\.|[^"])*\" { /*"*/
+	char * p;
+	for (p = yytext + 1; *p && *p != '\"'; ++p); /*"*/
+	yylval.string_val = (char*) calloc(p - yytext, sizeof(char));
+	strncpy(yylval.string_val, yytext + 1, p - (yytext + 1));
+	return STRING_LITERALLY;
 }
 
 [^ ^|\t\n]*[^ ^|\t\n]*  {

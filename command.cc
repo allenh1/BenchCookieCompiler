@@ -13,10 +13,7 @@ void Command::addPrintInt(char * _int)
   
   auto contains = [&has, this] (std::string s) -> bool {
     for (int x = 0; x < m_int_vars.size(); ++x) {
-      if (m_int_vars[x] == s) {
-	has = true;
-	return true;
-      }
+      if (m_int_vars[x] == s) return has = true;
     } return has = false;
   };
 
@@ -28,18 +25,25 @@ void Command::addPrintInt(char * _int)
   }
 }
 
-void Command::addPrintString(char * arg){}
+void Command::addPrintString(char * arg)
+{ m_print_strings.push_back(std::string(arg)); m_execOrder.push_back(cmd_type::PRINT_STR); }
 
 void Command::addPrintLiteral(char * arg)
-{ m_literals.push_back(std::string(arg)); }
+{      m_literals.push_back(std::string(arg)); m_execOrder.push_back(cmd_type::PRINT); }
 
 void Command::addReadInt(char * arg){}
 
-void Command::addReadString(char * arg){}
+void Command::addReadString(char * arg)
+{ m_string_vars.push_back(std::string(arg)); m_execOrder.push_back(cmd_type::READ_STRING); }
 
+// allocate enough space for drew-sized strings.
+#define MAX_STRING_SIZE 100
 void Command::doBSS(std::ostream & file)
 {
   file<<"\t.bss"<<std::endl<<std::endl;
+  for (int x = 0; x < m_string_vars.size(); ++x) {
+    file<<"\t.lcomm IS"<<x<<", "<<MAX_STRING_SIZE<<std::endl;
+  }
 }
 
 void Command::doData(std::ostream & file)
@@ -48,14 +52,44 @@ void Command::doData(std::ostream & file)
   for (int x = 0; x < m_literals.size(); ++x) {
     file<<"S"<<x<<":\t.ascii \""<<m_literals[x]<<"\\0\""<<std::endl;
   }
+  file<<std::endl<<"string_fmt:\t.ascii \"%s\"\\0"<<std::endl;
 }
 
 void Command::doMain(std::ostream & file)
 {
+  int y;      
   file<<"main:"<<std::endl;
-  for (int x = 0; x < m_literals.size(); ++x) {
-    file<<"\tldr %r0, =S"<<x<<std::endl;
-    file<<"\tbl printf"<<std::endl<<std::endl;
+  /**
+   * @todo use main's function calls for subroutines.
+   */
+
+  for (int x = 0, stringdex = 0, intdex = 0, pstringdex = 0, litdex = 0; x < m_execOrder.size(); ++x) {
+    if (m_execOrder[x] == cmd_type::READ_STRING) {
+      file<<"\tldr %r0, string_fmt"<<std::endl;
+      file<<"\tldr %r1, =IS"<<stringdex<<std::endl;
+      file<<"\tbl scanf"<<std::endl;
+      file<<std::endl;
+
+      ++stringdex;
+    } else if (m_execOrder[x] == cmd_type::READ_INT) {
+
+      ++intdex;
+    } else if (m_execOrder[x] == cmd_type::PRINT) {
+      file<<"\tldr %r0, =S"<<litdex++<<std::endl;
+      file<<"\tbl printf"<<std::endl<<std::endl;
+    } else if (m_execOrder[x] == cmd_type::PRINT_STR) {
+      file<<"\tldr %r0, string_fmt"<<std::endl;
+      for (y = 0; y < m_string_vars.size(); ++y) {
+        if (m_string_vars[y] == m_print_strings[pstringdex]) 
+          break;
+      } if (y == m_string_vars.size()) {
+        std::cerr<<"Error: variable "<<m_string_vars[y]<<" was not declared!"<<std::endl;
+        exit(3);
+      }
+
+      file<<"\tldr %r1, =IS"<<pstringdex<<std::endl;
+      ++pstringdex;
+    }
   }
 }
 
@@ -76,18 +110,18 @@ void Command::writeAssembly()
 
   doBSS(file);
   
-  file<<std::endl<<std::endl;
+  file<<std::endl;
   
   doData(file);
   
   file<<std::endl<<std::endl;
-  file<<"\t.text"<<std::endl<<std::endl;
+  file<<"\t.text"<<std::endl;
   file<<"\t.global main"<<std::endl;
-  file<<"\t.global printf"<<std::endl<<std::endl;
+  file<<"\t.global printf"<<std::endl;
   
   doMain(file);
   
-  file<<std::endl<<std::endl;
+  file<<std::endl;
   file<<"\tmov %r7, $1"<<std::endl;
 
 
@@ -99,6 +133,7 @@ void Command::writeAssembly()
 int yyparse(void);
 
 Command Command::cmd;
+ssize_t Command::line_num = 0;
 
 int main(int argc, char ** argv)
 {
@@ -111,10 +146,9 @@ int main(int argc, char ** argv)
   yyparse();
 
   Command::cmd.writeAssembly();
- 
   return 0;
   
- error:
+error:
   std::cerr<<"Invalid arguments!"<<std::endl;
   std::cerr<<"Usage: bcc output.s"<<std::endl;
   return 1;
