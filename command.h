@@ -8,6 +8,10 @@
 #include <string>
 #include <memory>
 
+// For the forks
+#include <unistd.h>
+#include <string.h>
+
 struct func {
   func(std::string _name = std::string("main")) {
     m_name = _name;
