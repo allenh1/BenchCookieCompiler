@@ -5,7 +5,7 @@ The syntax is kinda fun.
 
 Status:
 -------
-It prints stuff that is one word to the screen. To use, though, one does this.
+The compiler can now print and read strings and integers! Not much, but... PROGRESS.
 
 ```
     $ ./bcc out.s < source.bc
@@ -14,41 +14,39 @@ It prints stuff that is one word to the screen. To use, though, one does this.
 
 ToDo:
 -----
- * Compile automatically.
- * Save assembly if you get a "-s" flag.
- * Add the rest of the syntax, starting with `func main() { }`.
+ * ~~Compile automatically.~~
+ * Bool variables
+ * Arithmetic Expressions
+ * If statements
+ * Line Comments
+ * Block Comments
+ * Function objects
+ * Double/Float variables
 
 Interesting Ideas:
 ------------------
-We are still coming up with some interesting ideas for syntax. If you have some,
-feel free to fork this repo and modify this section of the readme. If we like it,
-we'll merge it and try to make it work.
+The syntax has *mostly* been made precise. We are going to continue with the linear style of code. This allows user input to be rather script-like, as this language is mostly for backend work. We are nowhere close to ready for window management... So, we will continue with this for now.
 
-Multi-Action Switch statements:
+The functions will ALL be objects. They will be initialized in some order to be called later. All necessary variables and return values reside on the heap. The ENTIRE chain is on the heap. Every separate chain ends up on the stack, where the first call resides at the top.
+
+Pick Statements:
 -------------------------------
-We have your basic switch statment, but also allow multiple results.
 Example:
 
-We have a data type for the labels, called a pick-list. The pick list is initialized as seen below, where
-the function that decides what's chosen is a parameter for the pick-list.
- 
-```
-func [arg1, arg2, ... ] picker;
+We have a notion of function objects.
 
-pick-list list(picker);
-
-pick from list {
-  one: 
-    ....
-  two:
-    ....
-  three:
-    ....
-  .
-  .
-  .
-}
 ```
+func (arg1, arg2, ...) picker = [
+  potential_object ? condition,
+  definite_object,
+  definite_object,
+] --> resultant_object
+```
+
+The `potential_object` is going to be a variable in this function if a certain
+condition is satisfied. The definite_objects are garaunteed to be there. The resultant
+is a pointer to the return list of the function object.
+
 Comments:
 ---------
 ```
