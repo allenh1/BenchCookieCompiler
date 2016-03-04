@@ -20,20 +20,18 @@ ToDo:
  * If statements
  * Line Comments
  * Block Comments
- * Function objects
- * Double/Float variables
-
+ * Float variables, Double variables
+ * 
 Interesting Ideas:
 ------------------
 The syntax has *mostly* been made precise. We are going to continue with the linear style of code. This allows user input to be rather script-like, as this language is mostly for backend work. We are nowhere close to ready for window management... So, we will continue with this for now.
 
 The functions will ALL be objects. They will be initialized in some order to be called later. All necessary variables and return values reside on the heap. The ENTIRE chain is on the heap. Every separate chain ends up on the stack, where the first call resides at the top.
 
-Pick Statements:
--------------------------------
-Example:
-
-We have a notion of function objects.
+Function Objects:
+-----------------
+We have a notion of function objects that allows us to direct flow from function to function,
+but still hold variables within these functions.
 
 ```
 func (arg1, arg2, ...) picker = [
