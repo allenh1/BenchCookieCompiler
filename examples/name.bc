@@ -1,0 +1,10 @@
+print "Enter your first name: " ?
+string please? > first
+print "Enter your last name: " ?
+string please? > last
+print "Hello, " ?
+print_string first ?
+print " " ?
+print_string last ?
+print ".\n" ?
+done!

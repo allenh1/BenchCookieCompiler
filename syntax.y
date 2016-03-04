@@ -1,23 +1,11 @@
-
-/*
- * CS-252
- * shell.y: parser for shell
- *
- * This parser compiles the following grammar:
- *
- *	cmd [arg]* [> filename] [< filename]
- *
- * you must extend it to understand the complete shell grammar
- *
- */
 %{#include <memory>%}
 
 %token <string_val> WORD
 %token <string_val> STRING_LITERALLY
 
-%token PRINT_STRING INT READ GREAT STRING DONE
+%token PRINT_STRING INT READ GREAT STRING DONE EPAREN
 %token PRINT_INT WHAAAT PRINT_THIS NOTOKEN NEW_LINE
-%token EBRACE OBRACE FUNC OPAREN EPAREN OBRACKET EBRACKET
+%token OBRACKET EBRACKET IF COLON OPAREN EQUALS LESS
 
 %union	{
 	char * string_val;
@@ -50,8 +38,7 @@ lines:
 line:
 	read_line
 	| print_line
-	| function
-    | DONE {
+        | DONE {
 		return 0;
 	}
 	;
@@ -89,12 +76,21 @@ print_literal:
     }
     ;
 
-function:
-    FUNC "main" OPAREN EPAREN OBRACE lines {
-        std::cout<<"Matched main"<<std::endl;
+exp:
+    WORD GREAT WORD {
+      
     }
-    | FUNC WORD OPAREN EPAREN OBRACE lines EBRACE
-	;
+    | WORD LESS WORD {
+
+    }
+    | WORD EQUALS WORD {
+
+    }
+    ;
+ 
+if_block:
+    IF exp OBRACKET lines EBRACKET
+    ;
 %%
 void yyerror(const char * s)
 {
