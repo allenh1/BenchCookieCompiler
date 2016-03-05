@@ -15,12 +15,21 @@ The compiler can now print and read strings and integers! Not much, but... PROGR
 ToDo:
 -----
  * ~~Compile automatically.~~
- * Bool variables
- * Arithmetic Expressions
- * If statements
- * Line Comments
- * Block Comments
- * Float variables, Double variables
+ * Bool variables                             <----------- Assigned to Hunter
+ * Arithmetic Expressions                     <----------- Assigned to Hunter
+ * If statements                              <----------- Assigned to Hunter
+ * Line Comments                              <----------- Assigned to Drew
+ * Block Comments                             <----------- Assigned to Drew
+ * Float variables, Double variables          <----------- Assigned to Hunter
+ * x86 / x86_64 support                       <----------- Assigned to Brian
+ * MIPS support                               <----------- Assigned to Drew
+ * Lex/Yacc style interpreter in Bench cookie <----------- Assigned to Hunter
+ * Bench Cookie in Bench Cookie
+ * Function Objects
+ * Machine-Code Optimization
+ * Network Communication Library
+ * Thread library
+ * Graphical User Interface Library
 
 Interesting Ideas:
 ------------------
