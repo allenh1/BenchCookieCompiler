@@ -52,5 +52,3 @@ void myunputc(int c) {
     strcpy(yylval.string_val, yytext);
     return WORD;
 }
-
-

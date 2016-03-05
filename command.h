@@ -9,7 +9,7 @@
 #include <string>
 #include <memory>
 #include <stack>
-// For de forks
+// For the forks
 #include <unistd.h>
 #include <string.h>
 

@@ -84,7 +84,9 @@ void Command::doBSS(std::ostream & file)
 void Command::doData(std::ostream & file)
 {
   file<<"\t.data"<<std::endl<<std::endl;
+
   /** Place the string literals **/
+
   for (int x = 0; x < m_literals.size(); ++x) {
     file<<"S"<<x<<":\t.ascii \""<<m_literals[x]<<"\\0\""<<std::endl;
   }
@@ -92,6 +94,7 @@ void Command::doData(std::ostream & file)
   std::cout<<std::endl;
 
   /** Place the integers. **/
+
   for (int x = 0; x < m_int_vars.size(); ++x) {
     file<<"I"<<x<<":\t.word 0"<<std::endl;
   }
@@ -232,6 +235,7 @@ void Command::writeAssembly()
    */
   file<<"\tbl fflush"<<std::endl;
   file<<"\tmov %r7, $1"<<std::endl;
+
   /** Toilet has been flushed **/
 
   file<<"\tswi $0"<<std::endl;
@@ -281,4 +285,3 @@ int main(int argc, char ** argv)
     return 0;
   }
 }
-
