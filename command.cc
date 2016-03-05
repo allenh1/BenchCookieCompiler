@@ -48,8 +48,11 @@ void Command::addToExpressionStack(char * arg)
   } else {
     toPush.expr_type   = exp_type::VAR;
     toPush.pirate_name = as_string;
-  } m_current_stack.push(toPush);
+  }
+
+  m_current_stack.push(toPush);
 }
+
 void Command::addReadString(char * arg)
 {
   m_string_vars.push_back(std::string(arg));
@@ -114,7 +117,7 @@ void Command::doMain(std::ostream & file)
    * @todo use main's function calls for subroutines.
    */
 
-  for (int x = 0, intassdex = 0, stringdex = 0,
+  for (int x = 0, intassdex = m_evaluations.size() - 1, stringdex = 0,
       intdex = 0, pintdex = 0, pstringdex = 0, litdex = 0;
       x < m_execOrder.size(); ++x) {
 
@@ -160,7 +163,7 @@ void Command::doMain(std::ostream & file)
       file<<"\tbl printf"<<std::endl;
       ++pintdex;
     } else if (m_execOrder[x] == cmd_type::INTGETS) {
-      size_t int_gets = m_int_assigns[intassdex++];
+      size_t int_gets = m_int_assigns[intassdex--];
             if (y == m_int_vars.size()) {
         std::cerr<<"Error: variable "<<m_int_vars[y];
         std::cerr<<" was not declared!"<<std::endl;
@@ -170,23 +173,17 @@ void Command::doMain(std::ostream & file)
       /** Begin Stack Evaluation **/
       std::stack<math_expression> * expr = m_evaluations[m_evaluations.size() - 1];
 
-      ssize_t stack_depth = 4 * expr->size();
+      ssize_t stack_depth = 0;
 
-
-      file<<"\tmov %r0, $0"<<std::endl;
-      /** We need to flip the stack **/
-      std::stack<math_expression> eval = *expr;
-      // for(; !expr->empty(); eval.push(expr->top()), expr->pop(), 1);
-
+      std::stack<math_expression> eval;// = *expr;
+      for(; !expr->empty(); eval.push(expr->top()), expr->pop(), 1);
+      std::stack<math_expression> curr;
+      
       std::vector<std::string> var_fp_offset;
-      for (; eval.size() > 1;) {
-        math_expression curr = eval.top(); eval.pop();
-        math_expression b = eval.top(); eval.pop();
+      for (; eval.size();) {
         math_expression a = eval.top(); eval.pop();
-        Command::exp_type type = static_cast<Command::exp_type>(curr.expr_type);
-        exp_type aExpType = static_cast<Command::exp_type>(a.expr_type);
-        exp_type bExpType = static_cast<Command::exp_type>(b.expr_type);
-        ssize_t adex = -1, bdex = -1;
+	Command::exp_type type = static_cast<Command::exp_type>(a.expr_type);
+	exp_type aExpType = static_cast<Command::exp_type>(a.expr_type);
         
         if (aExpType == VAR)  {
           for (y = 0; y < m_int_vars.size(); ++y) {
@@ -194,32 +191,26 @@ void Command::doMain(std::ostream & file)
           } if (y == m_int_vars.size()) {
             std::cerr<<"Error: variable "<<a.pirate_name<<" was not declared!"<<std::endl;
             exit(3);
-          } file<<"\tldr %r1, =I"<<y<<std::endl;
-          file<<"\tldr %r1, [%r1]"<<std::endl;
+          }
+	  file<<"\tldr %r1, =I"<<y<<std::endl;
+	  file<<"\tldr %r1, [%r1]"<<std::endl;
+          file<<"\tstr %r1, [%sp, #-4]"<<std::endl;
+	  file<<"\tsub %sp, %sp, $4"<<std::endl;
+	  stack_depth += 4; continue;
         } else if (aExpType == AN_INT) {
           file<<"\tmov %r1, $"<<a.int_arg<<std::endl;
-        } else if (aExpType == RESULT) {
-          file<<"\tmov %r1, %r3"<<std::endl;
-        } else {
-          std::cerr<<"Invalid expression!"<<std::endl;
-          exit(5);
-        } if (bExpType == VAR) {
-          for (y = 0; y < m_int_vars.size(); ++y) {
-            if (m_int_vars[y] == b.pirate_name) break;
-          } if (y == m_int_vars.size()) {
-            std::cerr<<"Error: variable "<<b.pirate_name<<" was not declared!"<<std::endl;
-            exit(3);
-          } file<<"\tldr %r2, =I"<<y<<std::endl;
-          file<<"\tldr %r2, [%r2]"<<std::endl;
-        } else if (bExpType == AN_INT) {
-          file<<"\tmov %r2, $"<<b.int_arg<<std::endl;
-        } else if (bExpType == RESULT) {
-          file<<"\tmov %r2, %r3"<<std::endl;
-        } else {
-          std::cerr<<"Invalid expression!"<<std::endl;
-          exit(5);
+	  file<<"\tstr %r1, [%sp, #-4]"<<std::endl;
+	  file<<"\tsub %sp, %sp, $4"<<std::endl;
+	  stack_depth += 4;
+	  continue;
         }
-        
+
+	if (stack_depth >= 8) {
+          file<<std::endl<<"\tldr %r1, [%sp]"<<std::endl;
+	  file<<"\tldr %r2, [%sp, #4]"<<std::endl;
+	  file<<"\tadd %sp, %sp, $8"<<std::endl;
+	  stack_depth -= 8;
+	} else continue;
         switch (type) {
           case ADD:
             /**
@@ -240,16 +231,19 @@ void Command::doMain(std::ostream & file)
             goto do_default;
           default:
           do_default:
-            math_expression toPush;
-            toPush.expr_type = static_cast<int>(exp_type::RESULT);
+            file<<"\tstr %r0, [%sp, #-4]"<<std::endl;
+	    file<<"\tsub %sp, %sp, $4"<<std::endl;
+	    stack_depth += 4;
         }
       }
 
+      file<<"\tldr %r0, [%sp, #-4]"<<std::endl;
+      file<<"\tadd %sp, %sp, $4"<<std::endl;
+      stack_depth -= 4;
       file<<"\tldr %r3, =I"<<int_gets<<std::endl;
       file<<"\tstr %r0, [%r3]"<<std::endl;
-
-      // file<<"\tmov %r0, $0"<<std::endl;
-      // file<<"\tstr %r3, I"<<y<<std::endl;
+      if (stack_depth) file<<"\tadd %sp, $"<<stack_depth<<"\t@ Destroy stack"<<std::endl;
+      else file<<"\t@ Yayy! Stack has nothing left."<<std::endl<<"\t@ You should be happy. I am."<<std::endl;
       file<<std::endl;
     }
   }

@@ -96,8 +96,8 @@ assignment:
     ;
 
 expr:
-    expr exp
-    | exp WHAAAT { Command::cmd.markEndOfExpression(); }
+    exp WHAAAT { Command::cmd.markEndOfExpression(); }
+    | exp expr
     ;
 
 exp:
