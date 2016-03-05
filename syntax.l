@@ -1,12 +1,3 @@
-
-/*
- *
- * CS-252 Spring 2016
- * shell.l: lexical analyzer for shell
- * You have to extend it.
- *
- */
-
 %{
 
 #include <string.h>
@@ -28,17 +19,25 @@ void myunputc(int c) {
 "print" { return PRINT_THIS; }
 "?" { return WHAAAT; }
 "int"  return INT;
+"bool" return BOOL;
+"double" return DOUBLE;
 "string" return STRING;
 "done!" return DONE;
-"please?" return READ;
+"please?" return READ; 
+"<--" return GETS;
 ">" return GREAT;
-"}" return EBRACE;
-"{" return OBRACE;
-"func" return FUNC;
+"<" return LESS;
+"==" return EQUALS;
 "(" return OPAREN;
 ")" return EPAREN;
 "[" return OBRACKET;
 "]" return EBRACKET;
+"if" return IF;
+
+"+" return PLUS;
+"-" return MINUS;
+"*" return TIMES;
+"/" return DIVIDE;
 
 \"(\\.|[^"])*\" { /*"*/
 	char * p;
@@ -54,7 +53,4 @@ void myunputc(int c) {
     return WORD;
 }
 
-.  {
-    return NOTOKEN;
-}
 

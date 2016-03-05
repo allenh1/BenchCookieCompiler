@@ -1,23 +1,16 @@
-
-/*
- * CS-252
- * shell.y: parser for shell
- *
- * This parser compiles the following grammar:
- *
- *	cmd [arg]* [> filename] [< filename]
- *
- * you must extend it to understand the complete shell grammar
- *
- */
 %{#include <memory>%}
-
-%token <string_val> WORD
+%token <string_val> WORD INTEGER DOUBLE
 %token <string_val> STRING_LITERALLY
 
-%token PRINT_STRING INT READ GREAT STRING DONE
-%token PRINT_INT WHAAAT PRINT_THIS NOTOKEN NEW_LINE
-%token EBRACE OBRACE FUNC OPAREN EPAREN OBRACKET EBRACKET
+%token PRINT_STRING INT READ GREAT STRING DONE EPAREN
+%token PRINT_INT WHAAAT PRINT_THIS NOTOKEN NEW_LINE BOOL
+%token OBRACKET EBRACKET IF COLON OPAREN EQUALS LESS GETS
+
+%token PLUS MINUS TIMES DIVIDE
+
+%left PLUS MINUS
+%left TIMES DIVIDE
+%left NEGATE
 
 %union	{
 	char * string_val;
@@ -26,6 +19,7 @@
 %{
 #include <stdio.h>
 #include <iostream>
+#include <cmath>
 #include "command.h"
 void yyerror(const char * s);
  int yylex();
@@ -40,7 +34,7 @@ void yyerror(const char * s);
  *
  * <action>: A single C statement. Multiple statements are wrapped in braces.
  */
-goal: lines;
+goal: lines
 
 lines:
     lines line
@@ -50,8 +44,8 @@ lines:
 line:
 	read_line
 	| print_line
-	| function
-    | DONE {
+	| assignment
+        | DONE {
 		return 0;
 	}
 	;
@@ -89,12 +83,39 @@ print_literal:
     }
     ;
 
-function:
-    FUNC "main" OPAREN EPAREN OBRACE lines {
-        std::cout<<"Matched main"<<std::endl;
+//declare:
+//    INT WORD WHAAAT
+//   | DBL WORD WHAAAT Command::cmd.declDouble($2);
+//  | STRING WORD WHAAAT Command::cmd.declString($2);
+//  | BOOL WORD WHAAAT Command::cmd.declBool($2);
+//    ;
+
+assignment:
+    WORD GETS exp { Command::cmd.addToExpressionStack($1); }
+    ;
+
+number:
+    WORD {
+      Command::cmd.addToExpressionStack($1);
+    } | INTEGER {
+      Command::cmd.addToExpressionStack($1);
+    } | DOUBLE {
+      Command::cmd.addToExpressionStack($1);
     }
-    | FUNC WORD OPAREN EPAREN OBRACE lines EBRACE
-	;
+    ;
+
+exp:
+    number
+    | exp PLUS exp { Command::cmd.addToExpressionStack(strdup("+")); }
+    | exp MINUS exp { Command::cmd.addToExpressionStack(strdup("-")); }
+    | exp TIMES exp { Command::cmd.addToExpressionStack(strdup("*")); }
+    | exp DIVIDE exp { Command::cmd.addToExpressionStack(strdup("/")); }
+    | OPAREN exp EPAREN { }
+    ;
+ 
+if_block:
+    IF exp OBRACKET lines EBRACKET
+    ;
 %%
 void yyerror(const char * s)
 {
