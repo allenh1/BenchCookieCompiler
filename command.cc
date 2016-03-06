@@ -176,12 +176,50 @@ void Command::doMain(std::ostream & file)
       file<<"\tmov %r0, $0"<<std::endl;
       /** We need to flip the stack **/
       std::stack<math_expression> eval = *expr;
-      //for(; !expr->empty(); eval.push(expr->top()), expr->pop(), 1);
+      // for(; !expr->empty(); eval.push(expr->top()), expr->pop(), 1);
 
       std::vector<std::string> var_fp_offset;
-      for (; !eval.empty();) {
+      for (; eval.size() > 1;) {
         math_expression curr = eval.top(); eval.pop();
+        math_expression b = eval.top(); eval.pop();
+        math_expression a = eval.top(); eval.pop();
         Command::exp_type type = static_cast<Command::exp_type>(curr.expr_type);
+        exp_type aExpType = static_cast<Command::exp_type>(a.expr_type);
+        exp_type bExpType = static_cast<Command::exp_type>(b.expr_type);
+        ssize_t adex = -1, bdex = -1;
+        
+        if (aExpType == VAR)  {
+          for (y = 0; y < m_int_vars.size(); ++y) {
+            if (m_int_vars[y] == a.pirate_name) break;
+          } if (y == m_int_vars.size()) {
+            std::cerr<<"Error: variable "<<a.pirate_name<<" was not declared!"<<std::endl;
+            exit(3);
+          } file<<"\tldr %r1, =I"<<y<<std::endl;
+          file<<"\tldr %r1, [%r1]"<<std::endl;
+        } else if (aExpType == AN_INT) {
+          file<<"\tmov %r1, $"<<a.int_arg<<std::endl;
+        } else if (aExpType == RESULT) {
+          file<<"\tmov %r1, %r3"<<std::endl;
+        } else {
+          std::cerr<<"Invalid expression!"<<std::endl;
+          exit(5);
+        } if (bExpType == VAR) {
+          for (y = 0; y < m_int_vars.size(); ++y) {
+            if (m_int_vars[y] == b.pirate_name) break;
+          } if (y == m_int_vars.size()) {
+            std::cerr<<"Error: variable "<<b.pirate_name<<" was not declared!"<<std::endl;
+            exit(3);
+          } file<<"\tldr %r2, =I"<<y<<std::endl;
+          file<<"\tldr %r2, [%r2]"<<std::endl;
+        } else if (bExpType == AN_INT) {
+          file<<"\tmov %r2, $"<<b.int_arg<<std::endl;
+        } else if (bExpType == RESULT) {
+          file<<"\tmov %r2, %r3"<<std::endl;
+        } else {
+          std::cerr<<"Invalid expression!"<<std::endl;
+          exit(5);
+        }
+        
         switch (type) {
           case ADD:
             /**
@@ -189,45 +227,26 @@ void Command::doMain(std::ostream & file)
              * You know, the stack_push((b=stack_pop(),a=stack_pop(),a+b))
              * kind of comma expresion.
              */
-            math_expression b = eval.top(); eval.pop();
-            math_expression a = eval.top(); eval.pop();
-            exp_type aExpType = static_cast<Command::exp_type>(a.expr_type);
-            exp_type bExpType = static_cast<Command::exp_type>(b.expr_type);
-            ssize_t adex = -1, bdex = -1;
-            if (aExpType == VAR)  {
-              for (y = 0; y < m_int_vars.size(); ++y) {
-                if (m_int_vars[y] == a.pirate_name) break;
-              } if (y == m_int_vars.size()) {
-                std::cerr<<"Error: variable "<<a.pirate_name<<" was not declared!"<<std::endl;
-                exit(3);
-              } file<<"\tldr %r1, =I"<<y<<std::endl;
-              file<<"\tldr %r1, [%r1]"<<std::endl;
-            } else if (aExpType == AN_INT) {
-              file<<"\tmov %r1, $"<<a.int_arg<<std::endl;
-            } else {
-              std::cerr<<"Invalid expression!"<<std::endl;
-              exit(5);
-            } if (bExpType == VAR) {
-              for (y = 0; y < m_int_vars.size(); ++y) {
-                if (m_int_vars[y] == b.pirate_name) break;
-              } if (y == m_int_vars.size()) {
-                std::cerr<<"Error: variable "<<a.pirate_name<<" was not declared!"<<std::endl;
-                exit(3);
-              } file<<"\tldr %r2, =I"<<y<<std::endl;
-              file<<"\tldr %r2, [%r2]"<<std::endl;
-            } else if (bExpType == AN_INT) {
-              file<<"\tmov %r2, $"<<b.int_arg<<std::endl;
-            } else {
-              std::cerr<<"Invalid expression!"<<std::endl;
-              exit(5);
-            }
             file<<"\tadd %r0, %r1, %r2"<<std::endl;
-            file<<"\tldr %r3, =I"<<int_gets<<std::endl;
-            file<<"\tstr %r0, [%r3]"<<std::endl;
-            break;
+            goto do_default;
+          case SUB:
+            file<<"\tsub %r0, %r1, %r2"<<std::endl;
+            goto do_default;
+          case MUL:
+            file<<"\tmul %r0, %r1, %r2"<<std::endl;
+            goto do_default;
+          case DIV:
+            file<<"\tdiv %r0, %r1, %r2"<<std::endl;
+            goto do_default;
+          default:
+          do_default:
+            math_expression toPush;
+            toPush.expr_type = static_cast<int>(exp_type::RESULT);
         }
       }
 
+      file<<"\tldr %r3, =I"<<int_gets<<std::endl;
+      file<<"\tstr %r0, [%r3]"<<std::endl;
 
       // file<<"\tmov %r0, $0"<<std::endl;
       // file<<"\tstr %r3, I"<<y<<std::endl;

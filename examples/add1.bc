@@ -1,8 +1,0 @@
-print "Hey, there!\n" ?
-print "Enter an integer: " ?
-int please? > num  
-print_int num ? print " + 1 = " ?
-num <-- num + 1 ?
-print_int num ? print "\n" ?
-done!
-

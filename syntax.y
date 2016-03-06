@@ -11,6 +11,7 @@
 %left PLUS MINUS
 %left TIMES DIVIDE
 %left NEGATE
+%right OPAREN EPAREN
 
 %union	{
 	char * string_val;
