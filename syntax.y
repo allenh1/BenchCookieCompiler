@@ -91,7 +91,7 @@ print_literal:
 //    ;
 
 assignment:
-    WORD GETS exp { Command::cmd.addToExpressionStack($1); }
+    WORD GETS exp { Command::cmd.addIntAssignment($1); }
     ;
 
 number:

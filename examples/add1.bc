@@ -1,0 +1,9 @@
+print "Hey, there!" ?
+print "Integer? " ?
+int please? > num  
+print "Value: " ? print_int num ? print "\n" ?
+print "num += 1\n" ?    
+num <-- num + 1
+print "num: " ? print_int num ? print "\n" ?
+done!
+
