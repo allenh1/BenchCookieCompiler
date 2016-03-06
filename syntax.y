@@ -91,7 +91,7 @@ print_literal:
 //    ;
 
 assignment:
-    WORD GETS exp { Command::cmd.addIntAssignment($1); }
+    WORD GETS expr { std::cerr<<"Called gets"<<std::endl; Command::cmd.markEndOfExpression(); Command::cmd.addIntAssignment($1); }
     ;
 
 number:
@@ -104,17 +104,18 @@ number:
     }
     ;
 
+expr:
+    expr exp
+    | exp
+    ;
+
 exp:
-    number
+    | number
     | exp PLUS exp { Command::cmd.addToExpressionStack(strdup("+")); }
     | exp MINUS exp { Command::cmd.addToExpressionStack(strdup("-")); }
     | exp TIMES exp { Command::cmd.addToExpressionStack(strdup("*")); }
     | exp DIVIDE exp { Command::cmd.addToExpressionStack(strdup("/")); }
     | OPAREN exp EPAREN { }
-    ;
- 
-if_block:
-    IF exp OBRACKET lines EBRACKET
     ;
 %%
 void yyerror(const char * s)

@@ -18,6 +18,9 @@ void Command::addPrintLiteral(char * arg)
 void Command::addReadInt(char * arg)
 { m_int_vars.push_back(std::string(arg)); m_execOrder.push_back(cmd_type::READ_INT); }
 
+void Command::markEndOfExpression()
+{ m_evaluations.push_back(m_current_stack); for(;!m_current_stack.empty();m_current_stack.pop()); }
+
 void Command::addToExpressionStack(char * arg)
 {
 	std::string as_string(arg);
@@ -28,6 +31,8 @@ void Command::addToExpressionStack(char * arg)
 		return !arg.empty() && std::find_if(arg.begin(),
 				arg.end(), [](char c) { return !std::isdigit(c); }) == arg.end();
 	};
+
+	std::cerr<<"Added to expression stack: "<<arg<<std::endl;
 	if (as_string == "+") {
 		toPush.expr_type = exp_type::ADD;
 	} else if (as_string == "-") {
@@ -45,7 +50,7 @@ void Command::addToExpressionStack(char * arg)
 	} else {
 		toPush.expr_type    = exp_type::VAR;
 		toPush.pirate_name = as_string;
-	}
+	} m_current_stack.push(toPush);
 }
 void Command::addReadString(char * arg)
 {
@@ -173,8 +178,8 @@ void Command::doMain(std::ostream & file)
 			file<<"\tmov %r0, $0"<<std::endl;
 			/** We need to flip the stack **/
 			std::stack<math_expression> eval;
-			for(; !expr->empty(); eval.push(expr->top()), 1);
-			expr->pop();
+			for(; !expr->empty(); eval.push(expr->top()), expr->pop(), 1);
+
 			std::vector<std::string> var_fp_offset;
 			for (; !eval.empty();) {
 				math_expression curr = eval.top(); eval.pop();

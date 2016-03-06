@@ -36,7 +36,7 @@ struct math_expression {
 	int int_arg;
 	double double_arg;
 	std::string pirate_name;
-	int expr_type;
+	int expr_type = -1;
 };
 
 class Command
@@ -63,6 +63,8 @@ public:
 	void addIntAssignment(char * arg);
 	void addToExpressionStack(char * arg);
 	
+	void markEndOfExpression();
+
 	void setFilename(const std::string & _filename)
 	{ m_filename = _filename; }
 
@@ -101,6 +103,7 @@ private:
 	std::vector<std::string> m_fileContents;
 	std::vector<var_decl> m_var_declarations;
 	std::vector<cmd_type> m_execOrder;
+	std::stack<math_expression> m_current_stack;
 	std::vector<std::stack<math_expression> > m_evaluations;
 };
 #endif
