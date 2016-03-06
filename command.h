@@ -104,6 +104,6 @@ private:
 	std::vector<var_decl> m_var_declarations;
 	std::vector<cmd_type> m_execOrder;
 	std::stack<math_expression> m_current_stack;
-	std::vector<std::stack<math_expression> > m_evaluations;
+	std::vector<std::stack<math_expression> *> m_evaluations;
 };
 #endif

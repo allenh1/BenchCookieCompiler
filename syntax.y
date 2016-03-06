@@ -91,26 +91,16 @@ print_literal:
 //    ;
 
 assignment:
-    WORD GETS expr { std::cerr<<"Called gets"<<std::endl; Command::cmd.markEndOfExpression(); Command::cmd.addIntAssignment($1); }
-    ;
-
-number:
-    WORD {
-      Command::cmd.addToExpressionStack($1);
-    } | INTEGER {
-      Command::cmd.addToExpressionStack($1);
-    } | DOUBLE {
-      Command::cmd.addToExpressionStack($1);
-    }
+    WORD GETS expr { Command::cmd.addIntAssignment($1); }
     ;
 
 expr:
     expr exp
-    | exp
+    | exp WHAAAT { Command::cmd.markEndOfExpression(); }
     ;
 
 exp:
-    | number
+    | WORD { Command::cmd.addToExpressionStack($1); }
     | exp PLUS exp { Command::cmd.addToExpressionStack(strdup("+")); }
     | exp MINUS exp { Command::cmd.addToExpressionStack(strdup("-")); }
     | exp TIMES exp { Command::cmd.addToExpressionStack(strdup("*")); }
