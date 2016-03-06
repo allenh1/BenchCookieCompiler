@@ -209,7 +209,7 @@ void Command::doMain(std::ostream & file)
               exit(5);
             } if (bExpType == VAR) {
               for (y = 0; y < m_int_vars.size(); ++y) {
-                if (m_int_vars[y] == a.pirate_name) break;
+                if (m_int_vars[y] == b.pirate_name) break;
               } if (y == m_int_vars.size()) {
                 std::cerr<<"Error: variable "<<a.pirate_name<<" was not declared!"<<std::endl;
                 exit(3);
