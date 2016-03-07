@@ -27,8 +27,6 @@ ToDo:
  * ~~Compile automatically.~~
  * ~~Bool variables~~                         <----------- Assigned to Hunter
  * ~~Arithmetic Expressions~~                 <----------- Assigned to Hunter
- * Refer repeated strings to the same label   <----------- Assigned to 
-Drew
  * If statements                              <----------- Assigned to Hunter
  * Line Comments                              <----------- Assigned to Drew
  * Block Comments                             <----------- Assigned to Drew
