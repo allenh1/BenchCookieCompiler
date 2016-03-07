@@ -5,18 +5,28 @@ The syntax is kinda fun.
 
 Status:
 -------
-The compiler can now print and read strings and integers! Not much, but... PROGRESS.
+We are actually very close to something useful! We have mathematical expressions
+evaluating! After I finish coding the operators, that is. Note: as of right now,
+we are only doing things with integers. So bad things will happen if you try and
+do floating point arithmetic. Please don't file bug reports about floats not
+doing what the should, because I'm telling you they won't.
+
+
+Usage:
+------
+To compile a program, run the following. Recall: until the mips support and
+x86/x86_64 architectures have been ported (Drew and Brian respectively), this
+will cause errors when bcc forks gcc. Sorry.
 
 ```
     $ ./bcc out.s < source.bc
-    $ gcc out.s -o out
 ```
 
 ToDo:
 -----
  * ~~Compile automatically.~~
- * Bool variables                             <----------- Assigned to Hunter
- * Arithmetic Expressions                     <----------- Assigned to Hunter
+ * ~~Bool variables~~                         <----------- Assigned to Hunter
+ * ~~Arithmetic Expressions~~                 <----------- Assigned to Hunter
  * If statements                              <----------- Assigned to Hunter
  * Line Comments                              <----------- Assigned to Drew
  * Block Comments                             <----------- Assigned to Drew
@@ -94,7 +104,3 @@ There is a general syntax for input.
 
 This reads a typename from stdin and puts it, nicely, in varname. Also, notice that lack of space on the word please. That's very important.
 
-
-About:
-======
-That is the question...

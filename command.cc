@@ -42,6 +42,28 @@ void Command::addToExpressionStack(char * arg)
     toPush.expr_type = exp_type::DIV;
   } else if (as_string == "%") {
     toPush.expr_type = exp_type::MOD;
+  } else if (as_string == "<=") {
+    toPush.expr_type = exp_type::LEQ;
+  } else if (as_string == ">=") {
+    toPush.expr_type = exp_type::GEQ;
+  } else if (as_string == ">") {
+    toPush.expr_type = exp_type::GT;
+  } else if (as_string == "<") {
+    toPush.expr_type = exp_type::LT;
+  } else if (as_string == "!") {
+    toPush.expr_type = exp_type::LOGNOT;
+  } else if (as_string == "&&") {
+    toPush.expr_type = exp_type::LOGAND;
+  } else if (as_string == "&") {
+    toPush.expr_type = exp_type::BITAND;
+  } else if (as_string == "|") {
+    toPush.expr_type = exp_type::BITOR;
+  } else if (as_string == "^^") {
+    toPush.expr_type = exp_type::LOGXOR;
+  } else if (as_string == "^") {
+    toPush.expr_type = exp_type::BITXOR;
+  } else if (as_string == "||") {
+    toPush.expr_type = exp_type::LOGOR;
   } else if (p(as_string)) {
     toPush.expr_type = exp_type::AN_INT;
     toPush.int_arg  = std::stoi(as_string);
@@ -111,7 +133,7 @@ void Command::doData(std::ostream & file)
 
 void Command::doMain(std::ostream & file)
 {
-  int y;      
+  int y; size_t divcount = 0;
   file<<"main:"<<std::endl;
   /**
    * @todo use main's function calls for subroutines.
@@ -226,9 +248,20 @@ void Command::doMain(std::ostream & file)
             file<<"\tmul %r0, %r1, %r2"<<std::endl;
             goto do_default;
           case DIV:
-            file<<"\tdiv %r0, %r1, %r2"<<std::endl;
+	    /* @todo case divide by zero */
+	    file<<"\tmov %r0, $0"<<std::endl<<std::endl;
+	    file<<"DIVIDE"<<divcount++<<":\tcmp %r1, %r2"<<std::endl;
+	    file<<"\tbgt DONEDIVIDE"<<divcount-1<<std::endl;
+	    file<<"\tsub %r2, %r2, %r1"<<std::endl;
+	    file<<"\tadd %r0, $1"<<std::endl;
+            file<<"\tb DIVIDE"<<divcount-1<<std::endl<<std::endl;
+	    file<<"DONEDIVIDE"<<divcount-1<<":"<<std::endl;
             goto do_default;
           default:
+	    std::cerr<<"Welp. You did it. You tried it."<<std::endl;
+	    std::cerr<<"This is what happens. You get mad."<<std::endl;
+	    std::cerr<<"Don't use things I didn't implement yet."<<std::endl;
+	    exit(101);
           do_default:
             file<<"\tstr %r0, [%sp, #-4]"<<std::endl;
 	    file<<"\tsub %sp, %sp, $4"<<std::endl;

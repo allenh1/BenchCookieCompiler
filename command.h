@@ -45,7 +45,9 @@ public:
   Command(){};
 
   enum cmd_type { READ_STRING, READ_INT, PRINT, PRINT_STR, PRINT_NUM, INTGETS, EXPR, DECLARE };
-  enum exp_type { ADD, SUB, MUL, DIV, MOD, AN_INT, VAR, ASIGN, RESULT };
+  enum exp_type { ADD, SUB, MUL, DIV, MOD, AN_INT, VAR, ASIGN, RESULT, LOGOR,
+		  LOGXOR, LOGAND, BITOR, BITXOR, NEQ, BITAND, EQ, GT, GEQ, LT,
+		  LEQ, SHIFTR, SHIFTL, LOGNOT, COMP, UPLUS, UMINUS };
 
   enum var_decl { DECL_INT, DECL_DOUBLE, DECL_STRING };
   

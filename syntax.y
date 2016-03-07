@@ -3,15 +3,20 @@
 %token <string_val> STRING_LITERALLY
 
 %token PRINT_STRING INT READ GREAT STRING DONE EPAREN
-%token PRINT_INT WHAAAT PRINT_THIS NOTOKEN NEW_LINE BOOL
+%token PRINT_INT WHAAAT PRINT_THIS NOTOKEN NEW_LINE BOOL ELSE
 %token OBRACKET EBRACKET IF COLON OPAREN EQUALS LESS GETS
 
-%token PLUS MINUS TIMES DIVIDE
+%token PLUS MINUS TIMES DIVIDE AND GREATEQ LAND LOR LESSEQ
+%token LXOR XOR NOTEQUALS OR TOOGREAT TOOLESS
 
-%left PLUS MINUS
-%left TIMES DIVIDE
-%left NEGATE
+%nonassoc IF ELSE
+
+%left PLUS MINUS LOR LESSEQ LXOR XOR NOTEQUALS
+%left TIMES DIVIDE TOOGREAT TOOLESS
+%left OR GREATEQ 
 %left OPAREN EPAREN
+
+%right GETS NOT TWIDLE
 
 %union	{
 	char * string_val;
@@ -86,13 +91,19 @@ print_literal:
 
 //declare:
 //    INT WORD WHAAAT
-//   | DBL WORD WHAAAT Command::cmd.declDouble($2);
+//  | DBL WORD WHAAAT Command::cmd.declDouble($2);
 //  | STRING WORD WHAAAT Command::cmd.declString($2);
 //  | BOOL WORD WHAAAT Command::cmd.declBool($2);
-//    ;
+//  ;
 
 assignment:
     WORD GETS expr { Command::cmd.addIntAssignment($1); }
+    ;
+
+if_else_block:
+    IF expr OBRACKET { Command::cmd.startIfBlock(); }
+    | ELSE IF expr OBRACKET lines EBRACKET
+    ELSE expr OBRACKET lines EBRACKET
     ;
 
 expr:
@@ -102,10 +113,28 @@ expr:
 
 exp:
     WORD { Command::cmd.addToExpressionStack($1); }
+    | exp LOR exp { Command::cmd.addToExpressionStack(strdup("||")); }
+    | exp LXOR exp { Command::cmd.addToExpressionStack(strdup("^^")); }
+    | exp LAND exp { Command::cmd.addToExpressionStack(strdup("&&")); }
+    | exp OR exp { Command::cmd.addToExpressionStack(strdup("|")); }
+    | exp XOR exp { Command::cmd.addToExpressionStack(strdup("^")); }
+    | exp AND exp { Command::cmd.addToExpressionStack(strdup("&")); }
+    | exp NOTEQUALS exp { Command::cmd.addToExpressionStack(strdup("!=")); }
+    | exp EQUALS exp { Command::cmd.addToExpressionStack(strdup("==")); }
+    | exp GREAT exp { Command::cmd.addToExpressionStack(strdup(">")); }
+    | exp GREATEQ exp { Command::cmd.addToExpressionStack(strdup(">=")); }
+    | exp LESS exp { Command::cmd.addToExpressionStack(strdup("<")); }
+    | exp LESSEQ exp { Command::cmd.addToExpressionStack(strdup("<=")); }
+    | exp TOOGREAT exp { Command::cmd.addToExpressionStack(strdup(">>")); }
+    | exp TOOLESS exp { Command::cmd.addToExpressionStack(strdup("<<")); }
     | exp PLUS exp { Command::cmd.addToExpressionStack(strdup("+")); }
     | exp MINUS exp { Command::cmd.addToExpressionStack(strdup("-")); }
     | exp TIMES exp { Command::cmd.addToExpressionStack(strdup("*")); }
     | exp DIVIDE exp { Command::cmd.addToExpressionStack(strdup("/")); }
+    | NOT exp { Command::cmd.addToExpressionStack(strdup("!")); }
+    | TWIDLE exp { Command::cmd.addToExpressionStack(strdup("~")); }
+    | PLUS exp { Command::cmd.addToExpressionStack(strdup("u+")); }
+    | MINUS exp { Command::cmd.addToExpressionStack(strdup("u-")); }
     | OPAREN exp EPAREN { }
     ;
 %%
