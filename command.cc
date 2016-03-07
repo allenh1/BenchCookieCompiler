@@ -134,7 +134,6 @@ void Command::doData(std::ostream & file)
 void Command::doMain(std::ostream & file)
 {
   int y; size_t divcount = 0;
-  std::string reg_contents[15];// Yes, I'm aware I can't use them all.  
   file<<"main:"<<std::endl;
   /**
    * @todo use main's function calls for subroutines.
@@ -152,28 +151,17 @@ void Command::doMain(std::ostream & file)
 
       ++stringdex;
     } else if (m_execOrder[x] == cmd_type::READ_INT) {
-      if (reg_contents[0] != "&num_fmt") {
-	file<<"\tldr %r0, =num_fmt"<<std::endl;
-	reg_contents[0] = "&num_fmt";
-      } if (reg_contents[1] != ("&I"+std::to_string(intdex))) {
-	file<<"\tldr %r1, =I"<<intdex<<std::endl;
-	reg_contents[1] = "&I" + std::to_string(intdex);
-      }
+      file<<"\tldr %r0, =num_fmt"<<std::endl;
+      file<<"\tldr %r1, =I"<<intdex<<std::endl;
       file<<"\tbl scanf"<<std::endl;
       file<<std::endl;
 
       ++intdex;
     } else if (m_execOrder[x] == cmd_type::PRINT) {
-      if (reg_contents[0] != "&S" + std::to_string(litdex)){
-        file<<"\tldr %r0, =S"<<litdex<<std::endl;
-	reg_contents[0] = "&S" + std::to_string(litdex);
-      } ++litdex;
+      file<<"\tldr %r0, =S"<<litdex++<<std::endl;
       file<<"\tbl printf"<<std::endl<<std::endl;
     } else if (m_execOrder[x] == cmd_type::PRINT_STR) {
-      if (reg_contents[0] != "&string_fmt") {
-	file<<"\tldr %r0, =string_fmt"<<std::endl;
-	reg_contents[0] = "&string_fmt";
-      }
+      file<<"\tldr %r0, =string_fmt"<<std::endl;
       for (y = 0; y < m_string_vars.size(); ++y) {
         if (m_string_vars[y] == m_print_strings[pstringdex]) break;
       } if (y == m_string_vars.size()) {
@@ -212,7 +200,7 @@ void Command::doMain(std::ostream & file)
       std::stack<math_expression> eval;// = *expr;
       for(; !expr->empty(); eval.push(expr->top()), expr->pop(), 1);
       std::stack<math_expression> curr;
-      
+          
       for (; eval.size();) {
         math_expression a = eval.top(); eval.pop();
 	Command::exp_type type = static_cast<Command::exp_type>(a.expr_type);
@@ -225,21 +213,13 @@ void Command::doMain(std::ostream & file)
             std::cerr<<"Error: variable "<<a.pirate_name<<" was not declared!"<<std::endl;
             exit(3);
           }
-	  std::string y_as_string = std::to_string(y);
-	  if (reg_contents[1] != ("I" + y_as_string)) {
-	    file<<"\tldr %r1, =I"<<y<<std::endl;
-	    file<<"\tldr %r1, [%r1]"<<std::endl;
-	    reg_contents[1] = std::string("I" + y_as_string);
-	  }
+	  file<<"\tldr %r1, =I"<<y<<std::endl;
+	  file<<"\tldr %r1, [%r1]"<<std::endl;
           file<<"\tstr %r1, [%sp, #-4]"<<std::endl;
 	  file<<"\tsub %sp, %sp, $4"<<std::endl;
 	  stack_depth += 4; continue;
         } else if (aExpType == AN_INT) {
-	  std::string arg_string = std::to_string(a.int_arg);
-	  if (reg_contents[1] != ("$"+ arg_string)) {
-	    file<<"\tmov %r1, $"<<a.int_arg<<std::endl;
-	    reg_contents[1] = std::string("$" + arg_string);
-	  }
+          file<<"\tmov %r1, $"<<a.int_arg<<std::endl;
 	  file<<"\tstr %r1, [%sp, #-4]"<<std::endl;
 	  file<<"\tsub %sp, %sp, $4"<<std::endl;
 	  stack_depth += 4;
