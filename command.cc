@@ -242,7 +242,7 @@ void Command::doMain(std::ostream & file)
             file<<"\tadd %r0, %r1, %r2"<<std::endl;
             goto do_default;
           case SUB:
-            file<<"\tsub %r0, %r1, %r2"<<std::endl;
+            file<<"\tsub %r0, %r2, %r1"<<std::endl;
             goto do_default;
           case MUL:
             file<<"\tmul %r0, %r1, %r2"<<std::endl;
