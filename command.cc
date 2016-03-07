@@ -250,11 +250,11 @@ void Command::doMain(std::ostream & file)
           case DIV:
 	    /* @todo case divide by zero */
 	    file<<"\tmov %r0, $0"<<std::endl<<std::endl;
-	    file<<"DIVIDE"<<divcount++<<":\tcmp %r1, %r2"<<std::endl;
+	    file<<"DIVIDE"<<divcount++<<": cmp %r1, %r2"<<std::endl;
 	    file<<"\tbgt DONEDIVIDE"<<divcount-1<<std::endl;
 	    file<<"\tsub %r2, %r2, %r1"<<std::endl;
 	    file<<"\tadd %r0, $1"<<std::endl;
-            file<<"\tb DIVIDE"<<divcount-1<<std::endl<<std::endl;
+            file<<"\tDIVIDE"<<divcount-1<<std::endl;
 	    file<<"DONEDIVIDE"<<divcount-1<<":"<<std::endl;
             goto do_default;
           default:
