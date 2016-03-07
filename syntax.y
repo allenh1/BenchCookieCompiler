@@ -11,7 +11,7 @@
 %left PLUS MINUS
 %left TIMES DIVIDE
 %left NEGATE
-%right OPAREN EPAREN
+%left OPAREN EPAREN
 
 %union	{
 	char * string_val;
@@ -101,7 +101,7 @@ expr:
     ;
 
 exp:
-    | WORD { Command::cmd.addToExpressionStack($1); }
+    WORD { Command::cmd.addToExpressionStack($1); }
     | exp PLUS exp { Command::cmd.addToExpressionStack(strdup("+")); }
     | exp MINUS exp { Command::cmd.addToExpressionStack(strdup("-")); }
     | exp TIMES exp { Command::cmd.addToExpressionStack(strdup("*")); }

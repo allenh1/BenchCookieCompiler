@@ -117,7 +117,7 @@ void Command::doMain(std::ostream & file)
    * @todo use main's function calls for subroutines.
    */
 
-  for (int x = 0, intassdex = m_evaluations.size() - 1, stringdex = 0,
+  for (int x = 0, intassdex = 0, stringdex = 0, exprdex = 0,
       intdex = 0, pintdex = 0, pstringdex = 0, litdex = 0;
       x < m_execOrder.size(); ++x) {
 
@@ -163,7 +163,7 @@ void Command::doMain(std::ostream & file)
       file<<"\tbl printf"<<std::endl;
       ++pintdex;
     } else if (m_execOrder[x] == cmd_type::INTGETS) {
-      size_t int_gets = m_int_assigns[intassdex--];
+      size_t int_gets = m_int_assigns[intassdex++];
             if (y == m_int_vars.size()) {
         std::cerr<<"Error: variable "<<m_int_vars[y];
         std::cerr<<" was not declared!"<<std::endl;
@@ -171,15 +171,14 @@ void Command::doMain(std::ostream & file)
       }
 
       /** Begin Stack Evaluation **/
-      std::stack<math_expression> * expr = m_evaluations[m_evaluations.size() - 1];
+      std::stack<math_expression> * expr = m_evaluations[exprdex++];
 
       ssize_t stack_depth = 0;
 
       std::stack<math_expression> eval;// = *expr;
       for(; !expr->empty(); eval.push(expr->top()), expr->pop(), 1);
       std::stack<math_expression> curr;
-      
-      std::vector<std::string> var_fp_offset;
+          
       for (; eval.size();) {
         math_expression a = eval.top(); eval.pop();
 	Command::exp_type type = static_cast<Command::exp_type>(a.expr_type);
@@ -237,8 +236,8 @@ void Command::doMain(std::ostream & file)
         }
       }
 
-      file<<"\tldr %r0, [%sp, #-4]"<<std::endl;
-      file<<"\tadd %sp, %sp, $4"<<std::endl;
+      file<<"\tldr %r0, [%sp, #0]"<<std::endl;
+      file<<"\tadd %sp, %sp, $0"<<std::endl;
       stack_depth -= 4;
       file<<"\tldr %r3, =I"<<int_gets<<std::endl;
       file<<"\tstr %r0, [%r3]"<<std::endl;
