@@ -21,13 +21,16 @@ void Command::addReadInt(char * arg)
 void Command::markEndOfExpression()
 { m_evaluations.push_back(new std::stack<math_expression>(m_current_stack)); for(;!m_current_stack.empty();m_current_stack.pop()); }
 
+void Command::declInt(char * arg)
+{ m_int_declarations.push_back(std::string(arg)); m_int_vars.push_back(std::string(arg)); m_execOrder.push_back(cmd_type::DECL_INT); }
+
 void Command::addToExpressionStack(char * arg)
 {
   std::string as_string(arg);
   math_expression toPush;
   bool is_integer;
 
-  auto p = [&is_integer] (std::string arg) -> bool{
+  auto p = [&is_integer] (std::string arg) -> bool {
     return !arg.empty() && std::find_if(arg.begin(),
         arg.end(), [](char c) { return !std::isdigit(c); }) == arg.end();
   };
@@ -90,7 +93,7 @@ void Command::addIntAssignment(char * varname) {
       int_assign push; push.m_name = var;
       ssize_t idx = m_evaluations.size();
       if (idx < 0) exitWithBug();;
-      m_int_assigns.push_back(x);
+      m_int_assigns.push_back(var);
       m_execOrder.push_back(cmd_type::INTGETS);
       return;
     }
@@ -129,18 +132,22 @@ void Command::doData(std::ostream & file)
   }
   file<<std::endl<<"string_fmt:\t.ascii \"%s\\0\""<<std::endl;
   file<<"num_fmt:\t.ascii \"%d\\0\""<<std::endl;
+  file<<"TRUE_STORY:\t.ascii \"true\\0\""<<std::endl;
+  file<<"FALSE:\t.ascii \"false\\0\""<<std::endl;
 }
 
 void Command::doMain(std::ostream & file)
 {
-  int y; size_t divcount = 0;
+  int y; size_t divcount = 0, nszcount = 0;
+  const size_t var_depth = 0;// Idk, yo. Just... somewhere.
   file<<"main:"<<std::endl;
   /**
    * @todo use main's function calls for subroutines.
    */
 
   for (int x = 0, intassdex = 0, stringdex = 0, exprdex = 0,
-      intdex = 0, pintdex = 0, pstringdex = 0, litdex = 0;
+	 intdex = 0, pintdex = 0, pstringdex = 0, litdex = 0,
+	 pbooldex = 0, sints = 0;
       x < m_execOrder.size(); ++x) {
 
     if (m_execOrder[x] == cmd_type::READ_STRING) {
@@ -150,6 +157,11 @@ void Command::doMain(std::ostream & file)
       file<<std::endl;
 
       ++stringdex;
+    } else if (m_execOrder[x] == cmd_type::DECL_INT) {
+      file<<"\tmov %r0, $0"<<std::endl;
+      file<<"\tstr %r0, [%sp, #-"<<sints * 4 + var_depth<<"]"<<std::endl;
+      file<<std::endl;
+      m_int_vars.push_back(m_int_declarations[sints++]);
     } else if (m_execOrder[x] == cmd_type::READ_INT) {
       file<<"\tldr %r0, =num_fmt"<<std::endl;
       file<<"\tldr %r1, =I"<<intdex<<std::endl;
@@ -179,17 +191,46 @@ void Command::doMain(std::ostream & file)
       } if (y == m_int_vars.size()) {
         std::cerr<<"Error: variable "<<m_int_vars[y]<<" was not declared!"<<std::endl;
         exit(3);
-      }
-      file<<"\tldr %r1, =I"<<y<<std::endl;
-      file<<"\tldr %r1, [%r1]"<<std::endl;
-      file<<"\tbl printf"<<std::endl;
+      } int z;
+      for (z = 0; z < m_int_declarations.size(); ++z) {
+	if (m_print_ints[pintdex] == m_int_declarations[z]) break;
+      } if (z != m_int_declarations.size()) {
+	file<<"\tldr %r1, [%sp, #-"<<var_depth + 4 * z<<"]"<<std::endl;
+      } else {
+	file<<"\tldr %r1, =I"<<y<<std::endl;
+	file<<"\tldr %r1, [%r1]"<<std::endl;
+      } file<<"\tbl printf"<<std::endl;
       ++pintdex;
+    } else if (m_execOrder[x] == cmd_type::PRINT_BOOL) {
+      for (y = 0; y < m_bool_vars.size(); ++y) {
+	if (m_bool_vars[y] == m_print_bools[pbooldex]) break;
+      } if (y == m_bool_vars.size()) {
+	std::cerr<<"Error: variable "<<m_bool_vars[y]<<" was not declared!"<<std::endl;
+      }
+      file<<"\tldr %r1, =B"<<y<<std::endl;
+      file<<"\tldr %r1, [%r1]"<<std::endl;
+      file<<"\tcmp %r1, $0"<<std::endl;
+      file<<"\tbne LIES"<<nszcount++<<std::endl;
+      file<<"\tldr %r0, =TRUE_STORY"<<std::endl;
+      file<<"\tb NOISTRUE"<<nszcount-1<<std::endl;
+      file<<"LIES"<<nszcount-1<<":"<<std::endl;
+      file<<"\tldr %r0, =FALSE"<<std::endl;
+      file<<"NOISTRUE"<<nszcount-1<<":"<<std::endl;
+      file<<"\tbl printf"<<std::endl;
+      ++pbooldex;
     } else if (m_execOrder[x] == cmd_type::INTGETS) {
-      size_t int_gets = m_int_assigns[intassdex++];
-            if (y == m_int_vars.size()) {
-        std::cerr<<"Error: variable "<<m_int_vars[y];
-        std::cerr<<" was not declared!"<<std::endl;
-        exit(3);
+      std::string int_gets = m_int_assigns[intassdex];
+      ssize_t offset;
+      for (y = 0; y < m_int_vars.size(); ++y) {
+	if (m_int_vars[y] == m_int_assigns[intassdex]) break;
+      } int z; bool on_stack = false;
+      for (z = 0; z < m_int_declarations.size(); ++z) {
+	if (m_int_vars[y] == m_int_declarations[z]) { on_stack = true; break; }
+      } offset = (z != m_int_declarations.size()) ? var_depth + 4 * z : y;
+      if (y == m_int_vars.size()) {
+	std::cerr<<"Error: variable "<<m_int_vars[y];
+	std::cerr<<" was not declared!"<<std::endl;
+	exit(3);
       }
 
       /** Begin Stack Evaluation **/
@@ -212,10 +253,16 @@ void Command::doMain(std::ostream & file)
           } if (y == m_int_vars.size()) {
             std::cerr<<"Error: variable "<<a.pirate_name<<" was not declared!"<<std::endl;
             exit(3);
-          }
-	  file<<"\tldr %r1, =I"<<y<<std::endl;
-	  file<<"\tldr %r1, [%r1]"<<std::endl;
-          file<<"\tstr %r1, [%sp, #-4]"<<std::endl;
+          } int z;
+	  for (z = 0; z < m_int_declarations.size(); ++z) {
+	    if (m_int_declarations[z] == m_int_vars[y]) break;
+	  } if (z != m_int_declarations.size()) {
+	    file<<"\tldr %r1, [%sp, #-"<<var_depth + 4 * z - stack_depth<<"]"<<std::endl;
+	  } else {
+	    file<<"\tldr %r1, =I"<<y<<std::endl;
+	    file<<"\tldr %r1, [%r1]"<<std::endl;
+	  }
+	  file<<"\tstr %r1, [%sp, #-4]"<<std::endl;
 	  file<<"\tsub %sp, %sp, $4"<<std::endl;
 	  stack_depth += 4; continue;
         } else if (aExpType == AN_INT) {
@@ -257,6 +304,38 @@ void Command::doMain(std::ostream & file)
             file<<"\t b DIVIDE"<<divcount-1<<std::endl;
 	    file<<"DONEDIVIDE"<<divcount-1<<":"<<std::endl;
             goto do_default;
+	  case GT:
+	    file<<"\tmov %r0, $1"<<std::endl;
+	    file<<"\tcmp %r1, %r2"<<std::endl;
+	    file<<"\tbgt NOSETZERO"<<nszcount<<std::endl;
+	    file<<"\tmov %r0, $0"<<std::endl;
+	    file<<"NOSETZERO"<<nszcount<<": @label used to set as true"<<std::endl;
+	    nszcount++;
+	    goto do_default;
+	  case GEQ:
+	    file<<"\tmov %r0, $1"<<std::endl;
+	    file<<"\tcmp %r1, %r2"<<std::endl;
+	    file<<"\tbge NOSETZERO"<<nszcount<<std::endl;
+	    file<<"\tmov %r0, $0"<<std::endl;
+	    file<<"NOSETZERO"<<nszcount<<": @label used to set as true"<<std::endl;
+	    nszcount++;
+	    goto do_default;
+	  case LT:
+	    file<<"\tmov %r0, $1"<<std::endl;
+	    file<<"\tcmp %r1, %r2"<<std::endl;
+	    file<<"\tblt NOSETZERO"<<nszcount<<std::endl;
+	    file<<"\tmov %r0, $0"<<std::endl;
+	    file<<"NOSETZERO"<<nszcount<<": @label used to set as true"<<std::endl;
+	    nszcount++;
+	    goto do_default;
+	  case LEQ:
+	    file<<"\tmov %r0, $1"<<std::endl;
+	    file<<"\tcmp %r1, %r2"<<std::endl;
+	    file<<"\tble NOSETZERO"<<nszcount<<std::endl;
+	    file<<"\tmov %r0, $0"<<std::endl;
+	    file<<"NOSETZERO"<<nszcount<<": @label used to set as true"<<std::endl;
+	    nszcount++;
+	    goto do_default;
           default:
 	    std::cerr<<"Welp. You did it. You tried it."<<std::endl;
 	    std::cerr<<"This is what happens. You get mad."<<std::endl;
@@ -272,11 +351,13 @@ void Command::doMain(std::ostream & file)
       file<<"\tldr %r0, [%sp, #0]"<<std::endl;
       file<<"\tadd %sp, %sp, $0"<<std::endl;
       stack_depth -= 4;
-      file<<"\tldr %r3, =I"<<int_gets<<std::endl;
+      if (!on_stack) {
+	file<<"\tldr %r3, =I"<<intassdex<<std::endl;
+      } else file<<"\tsub %sp, %sp, $"<<offset<<std::endl;
       file<<"\tstr %r0, [%r3]"<<std::endl;
       if (stack_depth) file<<"\tadd %sp, $"<<stack_depth<<"\t@ Destroy stack"<<std::endl;
       else file<<"\t@ Yayy! Stack has nothing left."<<std::endl<<"\t@ You should be happy. I am."<<std::endl;
-      file<<std::endl;
+      file<<std::endl; //intassdex++;
     }
   }
 }

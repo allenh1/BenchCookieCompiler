@@ -1,4 +1,4 @@
-all: adder hello_world name multiplier
+all: adder hello_world name multiplier greater
 
 adder: adder.bc
 	../bcc adder.s < adder.bc > /dev/null
@@ -12,5 +12,8 @@ name: name.bc
 multiplier: multiplier.bc
 	../bcc multiplier.s < multiplier.bc > /dev/null
 
+greater: greater.bc
+	../bcc greater.s < greater.bc > /dev/null
+
 clean:
-	rm -f *.s adder hello_world name multiplier
+	rm -f *.s adder hello_world name multiplier greater

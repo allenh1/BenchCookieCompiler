@@ -1,0 +1,9 @@
+print "Enter a number: " ?
+int please? > num1
+print "Enter a second number: " ?
+int please? > num2
+int test ?
+test <-- num1 > num2 ?
+print "\n" ? print_int num1 ? print " > " ? print_int num2 ?
+print ": " ? print_int test ? print "\n" ?
+done!

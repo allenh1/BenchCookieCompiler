@@ -50,19 +50,14 @@ lines:
 line:
 	read_line
 	| print_line
+	|declare
 	| assignment
-        | DONE {
-		return 0;
-	}
-	;
+        | DONE { return 0; }
+        ;
 
 read_line:
-    INT READ GREAT WORD {
-		Command::cmd.addReadInt($4);
-	}
-    | STRING READ GREAT WORD {
-		Command::cmd.addReadString($4);
-	}
+    INT READ GREAT WORD { Command::cmd.addReadInt($4); }
+    | STRING READ GREAT WORD { Command::cmd.addReadString($4); }
     ;
 
 print_line:
@@ -89,22 +84,22 @@ print_literal:
     }
     ;
 
-//declare:
-//    INT WORD WHAAAT
-//  | DBL WORD WHAAAT Command::cmd.declDouble($2);
-//  | STRING WORD WHAAAT Command::cmd.declString($2);
-//  | BOOL WORD WHAAAT Command::cmd.declBool($2);
-//  ;
+declare:
+    INT WORD WHAAAT { Command::cmd.declInt($2); }
+//    | DOUBLE WORD WHAAAT { Command::cmd.declDouble($2); }
+//    | STRING WORD WHAAAT { Command::cmd.declString($2); }
+//    | BOOL WORD WHAAAT { Command::cmd.declBool($2); }
+    ;
 
 assignment:
     WORD GETS expr { Command::cmd.addIntAssignment($1); }
     ;
 
-if_else_block:
-    IF expr OBRACKET { Command::cmd.startIfBlock(); }
-    | ELSE IF expr OBRACKET lines EBRACKET
-    ELSE expr OBRACKET lines EBRACKET
-    ;
+//if_else_block:
+//    IF expr OBRACKET { Command::cmd.startIfBlock(); }
+//    | ELSE IF expr OBRACKET lines EBRACKET
+//    ELSE expr OBRACKET lines EBRACKET
+//    ;
 
 expr:
     exp WHAAAT { Command::cmd.markEndOfExpression(); }

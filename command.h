@@ -44,12 +44,15 @@ class Command
 public:
   Command(){};
 
-  enum cmd_type { READ_STRING, READ_INT, PRINT, PRINT_STR, PRINT_NUM, INTGETS, EXPR, DECLARE };
+  enum cmd_type { READ_STRING, READ_INT, PRINT, PRINT_STR, PRINT_NUM, INTGETS,
+		  EXPR, DECL_INT, DECL_DOUBLE, DECL_STRING, DECL_BOOL,
+		  PRINT_BOOL };
+ 
   enum exp_type { ADD, SUB, MUL, DIV, MOD, AN_INT, VAR, ASIGN, RESULT, LOGOR,
 		  LOGXOR, LOGAND, BITOR, BITXOR, NEQ, BITAND, EQ, GT, GEQ, LT,
 		  LEQ, SHIFTR, SHIFTL, LOGNOT, COMP, UPLUS, UMINUS };
 
-  enum var_decl { DECL_INT, DECL_DOUBLE, DECL_STRING };
+  enum var_type { HINT, HDOUBLE, HFLOAT, HBOOL };
   
   void addPrintInt(char * arg);
   void addPrintString(char * arg);
@@ -61,7 +64,8 @@ public:
   void declDouble(char * arg);
   void declString(char * arg);
   void declBool(char * arg);
-
+  void declInt(char * arg);
+  
   void addIntAssignment(char * arg);
   void addToExpressionStack(char * arg);
   
@@ -100,10 +104,13 @@ private:
   
   std::vector<std::string> m_print_strings;
   std::vector<std::string> m_print_ints;
+  std::vector<std::string> m_print_bools;
   std::vector<std::string> m_lines;
-  std::vector<size_t> m_int_assigns;
+  std::vector<std::string> m_int_assigns;
+  std::vector<std::string> m_bool_assigns;
+  std::vector<std::string> m_bool_vars;
   std::vector<std::string> m_fileContents;
-  std::vector<var_decl> m_var_declarations;
+  std::vector<std::string> m_int_declarations;
   std::vector<cmd_type> m_execOrder;
   std::stack<math_expression> m_current_stack;
   std::vector<std::stack<math_expression> *> m_evaluations;
