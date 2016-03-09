@@ -1,4 +1,4 @@
-all: adder hello_world name multiplier greater
+all: adder hello_world name multiplier compare_ints
 
 adder: adder.bc
 	../bcc adder.s < adder.bc > /dev/null
@@ -12,8 +12,8 @@ name: name.bc
 multiplier: multiplier.bc
 	../bcc multiplier.s < multiplier.bc > /dev/null
 
-greater: greater.bc
-	../bcc greater.s < greater.bc > /dev/null
+compare_ints: compare_ints.bc
+	../bcc compare_ints.s < compare_ints.bc > /dev/null
 
 clean:
-	rm -f *.s adder hello_world name multiplier greater
+	rm -f *.s adder hello_world name multiplier compare_ints
