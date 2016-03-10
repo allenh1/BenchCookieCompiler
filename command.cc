@@ -432,7 +432,12 @@ int main(int argc, char ** argv)
     const char *exec_args[5];
 
     char * output = strndup(argv[1], strstr(argv[1], ".") - argv[1]);
+
+    #ifdef __arm__
     exec_args[0] = "gcc";
+    #else
+    exec_args[0] = "armv7a-hardfloat-linux-gnueabi-gcc";
+    #endif
     exec_args[1] = argv[1];
     exec_args[2] = "-o";
     exec_args[3] = output;
