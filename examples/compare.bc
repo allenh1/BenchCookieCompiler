@@ -1,0 +1,32 @@
+print "Enter the fist number: " ?
+int please? > num1
+print "Enter the second number: " ?
+int please? > num2
+int gt ?
+gt <-- num1 > num2 ?
+int lt ?
+lt <-- num1 < num2 ?
+int eq ?
+eq <-- ( num1 <= num2 ) * ( num1 >= num2 ) ?
+
+int diff ?
+
+if eq then
+  print_int num1 ? print " and " ? print_int num2 ?
+  print " are equal.\n" ?
+endif
+
+if gt then
+  diff <-- num1 - num2 ?
+  print_int num1 ? print " is strictly greater than " ? print_int num2 ?
+  print " by " ? print_int diff ? print ".\n" ?
+endif
+
+if lt then
+  diff <-- num2 - num1 ?
+  print_int num2 ? print " is strictly greater than " ? print_int num1 ?
+  print " by " ? print_int diff ? print ".\n" ?
+endif
+
+done!
+

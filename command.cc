@@ -24,6 +24,14 @@ void Command::markEndOfExpression()
 void Command::declInt(char * arg)
 { m_int_declarations.push_back(std::string(arg)); m_int_vars.push_back(std::string(arg)); m_execOrder.push_back(cmd_type::DECL_INT); }
 
+void Command::startIfBlock(char * arg)
+{
+  m_execOrder.push_back(cmd_type::BEGIN_IF);
+  m_if_deps.push_back(std::string(arg));
+}
+
+void Command::endIfBlock() { m_execOrder.push_back(cmd_type::END_IF); }
+
 void Command::addToExpressionStack(char * arg)
 {
   std::string as_string(arg);
@@ -155,7 +163,7 @@ void Command::doMain(std::ostream & file)
 
   for (int x = 0, intassdex = 0, stringdex = 0, exprdex = 0,
 	 intdex = 0, pintdex = 0, pstringdex = 0, litdex = 0,
-	 pbooldex = 0, sints = 0;
+	 pbooldex = 0, sints = 0, ifndex = 0;
       x < m_execOrder.size(); ++x) {
 
     if (m_execOrder[x] == cmd_type::READ_STRING) {
@@ -172,6 +180,32 @@ void Command::doMain(std::ostream & file)
 
       file<<std::endl;
       m_int_vars.push_back(m_int_declarations[sints++]);
+    } else if (m_execOrder[x] == cmd_type::BEGIN_IF) {
+      // find the variable we depend on!
+      std::string var_name = m_if_deps[ifndex];
+      for (y = 0; y < m_int_vars.size(); ++y) {
+	if (m_int_vars[y] == var_name) break;
+      } int z = 0;
+      for (z = 0; z < m_int_declarations.size(); ++z) {
+	if (m_int_declarations[z] == var_name) break;
+      } if (z < m_int_declarations.size()) {
+	file<<"\tmov %r1, %r9"<<std::endl;
+	file<<"\tldr %r1, [%r1, #"<<4*z<<"]"<<std::endl;
+	file<<"\tldr %r0, [%r1]"<<std::endl;
+      } else if (y < m_int_vars.size())  {
+	file<<"\tldr %r0, =I"<<y<<std::endl;
+	file<<"\tldr %r0, [%r0]"<<std::endl;
+      } else {
+	std::cerr<<"Error: if-dependent variable "<<var_name;
+	std::cerr<<" not yet declared!"<<std::endl;
+	exit(3);
+      }
+
+      file<<"IF"<<ifndex<<":\tcmp %r0, $0"<<std::endl;
+      file<<"\tbeq END_IF"<<ifndex<<std::endl;
+      ++ifndex;
+    } else if (m_execOrder[x] == cmd_type::END_IF) {
+      file<<"END_IF"<<ifndex-1<<":"<<std::endl;
     } else if (m_execOrder[x] == cmd_type::READ_INT) {
       file<<"\tldr %r0, =num_fmt"<<std::endl;
       file<<"\tldr %r1, =I"<<intdex<<std::endl;

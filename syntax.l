@@ -47,6 +47,8 @@ void myunputc(int c) {
 "]" return EBRACKET;
 "if" return IF;
 "else" return ELSE;
+"then" return THEN;
+"endif" return ENDIF;
 
 "+" return PLUS;
 "-" return MINUS;

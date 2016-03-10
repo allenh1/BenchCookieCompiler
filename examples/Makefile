@@ -12,8 +12,8 @@ name: name.bc
 multiplier: multiplier.bc
 	../bcc multiplier.s < multiplier.bc > /dev/null
 
-compare_ints: compare_ints.bc
-	../bcc compare_ints.s < compare_ints.bc > /dev/null
+compare: compare.bc
+	../bcc compare.s < compare.bc > /dev/null
 
 clean:
 	rm -f *.s adder hello_world name multiplier compare_ints

@@ -7,9 +7,9 @@
 %token OBRACKET EBRACKET IF COLON OPAREN EQUALS LESS GETS
 
 %token PLUS MINUS TIMES DIVIDE AND GREATEQ LAND LOR LESSEQ
-%token LXOR XOR NOTEQUALS OR TOOGREAT TOOLESS
+%token LXOR XOR NOTEQUALS OR TOOGREAT TOOLESS THEN ENDIF
 
-%nonassoc IF ELSE
+%nonassoc IF ELSE THEN ENDIF
 
 %left PLUS MINUS LOR LESSEQ LXOR XOR NOTEQUALS
 %left TIMES DIVIDE TOOGREAT TOOLESS
@@ -50,7 +50,8 @@ lines:
 line:
 	read_line
 	| print_line
-	|declare
+	| if_else_block
+	| declare
 	| assignment
         | DONE { return 0; }
         ;
@@ -95,11 +96,10 @@ assignment:
     WORD GETS expr { Command::cmd.addIntAssignment($1); }
     ;
 
-//if_else_block:
-//    IF expr OBRACKET { Command::cmd.startIfBlock(); }
-//    | ELSE IF expr OBRACKET lines EBRACKET
-//    ELSE expr OBRACKET lines EBRACKET
-//    ;
+if_else_block:
+    IF WORD THEN { Command::cmd.startIfBlock($2); }
+    | ENDIF { Command::cmd.endIfBlock(); }
+    ;
 
 expr:
     exp WHAAAT { Command::cmd.markEndOfExpression(); }
@@ -126,10 +126,10 @@ exp:
     | exp MINUS exp { Command::cmd.addToExpressionStack(strdup("-")); }
     | exp TIMES exp { Command::cmd.addToExpressionStack(strdup("*")); }
     | exp DIVIDE exp { Command::cmd.addToExpressionStack(strdup("/")); }
-    | NOT exp { Command::cmd.addToExpressionStack(strdup("!")); }
+/*    | NOT exp { Command::cmd.addToExpressionStack(strdup("!")); }
     | TWIDLE exp { Command::cmd.addToExpressionStack(strdup("~")); }
     | PLUS exp { Command::cmd.addToExpressionStack(strdup("u+")); }
-    | MINUS exp { Command::cmd.addToExpressionStack(strdup("u-")); }
+    | MINUS exp { Command::cmd.addToExpressionStack(strdup("u-")); } */
     | OPAREN exp EPAREN { }
     ;
 %%
