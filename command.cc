@@ -357,8 +357,8 @@ void Command::doMain(std::ostream & file)
 	    exit(101);
           do_default:
             file<<"\tstr %r0, [%sp, #-4]"<<std::endl;
-	    file<<"\tsub %sp, %sp, $4"<<std::endl;
-	    stack_depth += 4;
+	          file<<"\tsub %sp, %sp, $4"<<std::endl;
+	          stack_depth += 4;
         }
       }
 
@@ -366,11 +366,15 @@ void Command::doMain(std::ostream & file)
       file<<"\tadd %sp, %sp, $0"<<std::endl;
       stack_depth -= 4;
       if (!on_stack) {
-	file<<"\tldr %r3, =I"<<intassdex<<std::endl;
+        int x;
+       for (x = 0; x < m_int_vars.size(); ++x) {
+        if (m_int_vars[x] == int_gets) break;
+       }
+	     file<<"\tldr %r3, =I"<<x<<std::endl;
       } else {
-	file<<"\tldr %r3, =locals"<<std::endl;
-	file<<"\tldr %r3, [%r3, #"<<*last_z * 4<<"]"<<std::endl;
-	delete last_z;
+	     file<<"\tldr %r3, =locals"<<std::endl;
+	     file<<"\tldr %r3, [%r3, #"<<*last_z * 4<<"]"<<std::endl;
+	     delete last_z;
       }
       file<<"\tstr %r0, [%r3]"<<std::endl;
       if (stack_depth) file<<"\tadd %sp, $"<<stack_depth<<"\t@ Destroy stack"<<std::endl;
