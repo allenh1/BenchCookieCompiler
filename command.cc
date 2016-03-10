@@ -111,6 +111,11 @@ void Command::doBSS(std::ostream & file)
   for (int x = 0; x < m_string_vars.size(); ++x) {
     file<<"\t.lcomm IS"<<x<<", "<<MAX_STRING_SIZE<<std::endl;
   }
+
+  /** Place locals' linked list **/
+
+  file<<"\t.lcomm locals, 400";
+  file<<std::endl;
 }
 
 void Command::doData(std::ostream & file)
@@ -127,9 +132,10 @@ void Command::doData(std::ostream & file)
 
   /** Place the integers. **/
 
-  for (int x = 0; x < m_int_vars.size(); ++x) {
+  for (int x = 0; x < m_int_vars.size() - m_int_declarations.size(); ++x) {
     file<<"I"<<x<<":\t.word 0"<<std::endl;
   }
+  
   file<<std::endl<<"string_fmt:\t.ascii \"%s\\0\""<<std::endl;
   file<<"num_fmt:\t.ascii \"%d\\0\""<<std::endl;
   file<<"TRUE_STORY:\t.ascii \"true\\0\""<<std::endl;
@@ -139,8 +145,10 @@ void Command::doData(std::ostream & file)
 void Command::doMain(std::ostream & file)
 {
   int y; size_t divcount = 0, nszcount = 0;
-  const size_t var_depth = 0;// Idk, yo. Just... somewhere.
+  const size_t local_count = 0;// Idk, yo. Just... somewhere.
   file<<"main:"<<std::endl;
+  file<<"\tldr %r9, =locals"<<std::endl;
+  file<<"\t@ Make space for locals"<<std::endl;
   /**
    * @todo use main's function calls for subroutines.
    */
@@ -158,8 +166,10 @@ void Command::doMain(std::ostream & file)
 
       ++stringdex;
     } else if (m_execOrder[x] == cmd_type::DECL_INT) {
-      file<<"\tmov %r0, $0"<<std::endl;
-      file<<"\tstr %r0, [%sp, #-"<<sints * 4 + var_depth<<"]"<<std::endl;
+      file<<"\tmov %r0, $4"<<std::endl;
+      file<<"\tbl malloc"<<std::endl;
+      file<<"\tstr %r0, [%r9, #"<<sints * 4<<"]"<<std::endl;
+
       file<<std::endl;
       m_int_vars.push_back(m_int_declarations[sints++]);
     } else if (m_execOrder[x] == cmd_type::READ_INT) {
@@ -195,7 +205,9 @@ void Command::doMain(std::ostream & file)
       for (z = 0; z < m_int_declarations.size(); ++z) {
 	if (m_print_ints[pintdex] == m_int_declarations[z]) break;
       } if (z != m_int_declarations.size()) {
-	file<<"\tldr %r1, [%sp, #-"<<var_depth + 4 * z<<"]"<<std::endl;
+	file<<"\tldr %r1, =locals"<<std::endl;
+	file<<"\tldr %r1, [%r1, #"<<4 * z<<"]"<<std::endl;
+	file<<"\tldr %r1, [%r1]"<<std::endl;
       } else {
 	file<<"\tldr %r1, =I"<<y<<std::endl;
 	file<<"\tldr %r1, [%r1]"<<std::endl;
@@ -223,15 +235,15 @@ void Command::doMain(std::ostream & file)
       ssize_t offset;
       for (y = 0; y < m_int_vars.size(); ++y) {
 	if (m_int_vars[y] == m_int_assigns[intassdex]) break;
-      } int z; bool on_stack = false;
+      } int z; bool on_stack = false; int * last_z = new int;
       for (z = 0; z < m_int_declarations.size(); ++z) {
 	if (m_int_vars[y] == m_int_declarations[z]) { on_stack = true; break; }
-      } offset = (z != m_int_declarations.size()) ? var_depth + 4 * z : y;
+      } offset = (z != m_int_declarations.size()) ? 4 * z : y;
       if (y == m_int_vars.size()) {
 	std::cerr<<"Error: variable "<<m_int_vars[y];
 	std::cerr<<" was not declared!"<<std::endl;
 	exit(3);
-      }
+      } *last_z = z;
 
       /** Begin Stack Evaluation **/
       std::stack<math_expression> * expr = m_evaluations[exprdex++];
@@ -257,7 +269,8 @@ void Command::doMain(std::ostream & file)
 	  for (z = 0; z < m_int_declarations.size(); ++z) {
 	    if (m_int_declarations[z] == m_int_vars[y]) break;
 	  } if (z != m_int_declarations.size()) {
-	    file<<"\tldr %r1, [%sp, #-"<<var_depth + 4 * z - stack_depth<<"]"<<std::endl;
+	    file<<"\tldr %r1, [locals, #"<<4 * z<<"]"<<std::endl;
+	    file<<"\tldr %r1, [%r1]"<<std::endl;
 	  } else {
 	    file<<"\tldr %r1, =I"<<y<<std::endl;
 	    file<<"\tldr %r1, [%r1]"<<std::endl;
@@ -306,7 +319,8 @@ void Command::doMain(std::ostream & file)
             goto do_default;
 	  case GT:
 	    file<<"\tmov %r0, $1"<<std::endl;
-	    file<<"\tcmp %r1, %r2"<<std::endl;
+	    file<<"\tcmp %r2, %r1"<<"\t@ Backwards because stack"<<std::endl;
+	    file<<std::endl;
 	    file<<"\tbgt NOSETZERO"<<nszcount<<std::endl;
 	    file<<"\tmov %r0, $0"<<std::endl;
 	    file<<"NOSETZERO"<<nszcount<<": @label used to set as true"<<std::endl;
@@ -314,7 +328,7 @@ void Command::doMain(std::ostream & file)
 	    goto do_default;
 	  case GEQ:
 	    file<<"\tmov %r0, $1"<<std::endl;
-	    file<<"\tcmp %r1, %r2"<<std::endl;
+	    file<<"\tcmp %r2, %r1"<<std::endl;
 	    file<<"\tbge NOSETZERO"<<nszcount<<std::endl;
 	    file<<"\tmov %r0, $0"<<std::endl;
 	    file<<"NOSETZERO"<<nszcount<<": @label used to set as true"<<std::endl;
@@ -322,7 +336,7 @@ void Command::doMain(std::ostream & file)
 	    goto do_default;
 	  case LT:
 	    file<<"\tmov %r0, $1"<<std::endl;
-	    file<<"\tcmp %r1, %r2"<<std::endl;
+	    file<<"\tcmp %r2, %r1"<<std::endl;
 	    file<<"\tblt NOSETZERO"<<nszcount<<std::endl;
 	    file<<"\tmov %r0, $0"<<std::endl;
 	    file<<"NOSETZERO"<<nszcount<<": @label used to set as true"<<std::endl;
@@ -330,7 +344,7 @@ void Command::doMain(std::ostream & file)
 	    goto do_default;
 	  case LEQ:
 	    file<<"\tmov %r0, $1"<<std::endl;
-	    file<<"\tcmp %r1, %r2"<<std::endl;
+	    file<<"\tcmp %r2, %r1"<<std::endl;
 	    file<<"\tble NOSETZERO"<<nszcount<<std::endl;
 	    file<<"\tmov %r0, $0"<<std::endl;
 	    file<<"NOSETZERO"<<nszcount<<": @label used to set as true"<<std::endl;
@@ -353,11 +367,15 @@ void Command::doMain(std::ostream & file)
       stack_depth -= 4;
       if (!on_stack) {
 	file<<"\tldr %r3, =I"<<intassdex<<std::endl;
-      } else file<<"\tsub %sp, %sp, $"<<offset<<std::endl;
+      } else {
+	file<<"\tldr %r3, =locals"<<std::endl;
+	file<<"\tldr %r3, [%r3, #"<<*last_z * 4<<"]"<<std::endl;
+	delete last_z;
+      }
       file<<"\tstr %r0, [%r3]"<<std::endl;
       if (stack_depth) file<<"\tadd %sp, $"<<stack_depth<<"\t@ Destroy stack"<<std::endl;
       else file<<"\t@ Yayy! Stack has nothing left."<<std::endl<<"\t@ You should be happy. I am."<<std::endl;
-      file<<std::endl; //intassdex++;
+      file<<std::endl; intassdex++;
     }
   }
 }
@@ -387,8 +405,26 @@ void Command::writeAssembly()
   file<<"\t.text"<<std::endl;
   file<<"\t.global main"<<std::endl;
   file<<"\t.global printf"<<std::endl;
+  file<<"\t.global scanf"<<std::endl;
+  file<<"\t.global malloc"<<std::endl;
 
   doMain(file);
+
+  /**
+   * Free locals
+   *
+   * @todo Free locals when last used.
+   *       Maybe change file to a list
+   *       and search for last usage?
+   */
+  file<<"\t@ Free local vars"<<std::endl;
+  for (int x = 0; x < m_int_declarations.size(); ++x) {
+    file<<"\tldr %r0, =locals"<<std::endl;
+    file<<"\tldr %r0, [%r0, #"<<4 * x<<"]"<<std::endl;
+    file<<"\tbl free"<<std::endl<<std::endl;
+  }
+
+  file<<"\t@ locals are free"<<std::endl<<std::endl;
 
   file<<std::endl;
   file<<"\tmov %r0, $0"<<std::endl;
