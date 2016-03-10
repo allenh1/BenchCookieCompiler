@@ -27,7 +27,7 @@ ToDo:
  * ~~Compile automatically.~~
  * ~~Bool variables~~                         <----------- Assigned to Hunter
  * ~~Arithmetic Expressions~~                 <----------- Assigned to Hunter
- * If statements                              <----------- Assigned to Hunter
+ * ~~If statements~~                              <----------- Assigned to Hunter
  * Line Comments                              <----------- Assigned to Drew
  * Block Comments                             <----------- Assigned to Drew
  * Float variables, Double variables          <----------- Assigned to Hunter
@@ -77,6 +77,36 @@ Comments:
 print "Hallo, there!\n"?
 ; This is also a line comment.
 ```
+
+If Statements:
+--------------
+Still under development, but you can now use it somewhat.
+If statments currently require you create a local variable
+in which you store the statement to be tested. In the following,
+we test if num, an int, is greater than zero. If so, we print
+"Yup." Otherwise, we print "Nope."
+
+```
+int test ?
+test <-- num > 0 ?
+
+if test then
+  print "Yup.\n" ?
+endif
+
+test <-- num <= 0 ?
+
+if test then
+  print "Nope.\n" ?
+endif
+```
+
+Yes, I know that not having else statements is annoying.
+I will probably have them by the end of the day. And, if
+we are lucky, we will have else-if's, too.
+
+Again, if you are disgusted by this syntax, please let me
+know (and hopefully suggest something else).
 
 Output Statements:
 -----------------
