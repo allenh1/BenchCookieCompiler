@@ -203,12 +203,12 @@ void Command::doMain(std::ostream & file)
       std::stack<math_expression> eval;// = *expr;
       for(; !expr->empty(); eval.push(expr->top()), expr->pop(), 1);
       std::stack<math_expression> curr;
-          
+
       for (; eval.size();) {
         math_expression a = eval.top(); eval.pop();
 	Command::exp_type type = static_cast<Command::exp_type>(a.expr_type);
 	exp_type aExpType = static_cast<Command::exp_type>(a.expr_type);
-        
+
         if (aExpType == VAR)  {
           for (y = 0; y < m_int_vars.size(); ++y) {
             if (m_int_vars[y] == a.pirate_name) break;
