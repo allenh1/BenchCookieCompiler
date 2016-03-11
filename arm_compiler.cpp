@@ -226,21 +226,21 @@ void Command::doMain(std::ostream & file)
 	    file<<"\tldr %r1, =I"<<y<<std::endl;
 	    file<<"\tldr %r1, [%r1]"<<std::endl;
 	  }
-	  file<<"\tstr %r1, [%sp, #-4]"<<std::endl;
-	  file<<"\tsub %sp, %sp, $4"<<std::endl;
+	  file<<"\tpush {%r1}"<<std::endl;
+	  // file<<"\tsub %sp, %sp, $4"<<std::endl;
 	  stack_depth += 4; continue;
         } else if (aExpType == AN_INT) {
           file<<"\tmov %r1, $"<<a.int_arg<<std::endl;
-	  file<<"\tstr %r1, [%sp, #-4]"<<std::endl;
-	  file<<"\tsub %sp, %sp, $4"<<std::endl;
+	  file<<"\tpush {%r1} "<<std::endl;
 	  stack_depth += 4;
 	  continue;
         }
 
 	if (stack_depth >= 8) {
-          file<<std::endl<<"\tldr %r1, [%sp]"<<std::endl;
-	  file<<"\tldr %r2, [%sp, #4]"<<std::endl;
-	  file<<"\tadd %sp, %sp, $8"<<std::endl;
+          // file<<std::endl<<"\tldr %r1, [%sp]"<<std::endl;
+	  // file<<"\tldr %r2, [%sp, #4]"<<std::endl;
+	  // file<<"\tadd %sp, %sp, $8"<<std::endl;
+	  file<<"\tpop {%r1, %r2}"<<std::endl;
 	  stack_depth -= 8;
 	} else continue;
         switch (type) {
@@ -307,14 +307,15 @@ void Command::doMain(std::ostream & file)
 	    std::cerr<<"Don't use things I didn't implement yet."<<std::endl;
 	    exit(101);
           do_default:
-            file<<"\tstr %r0, [%sp, #-4]"<<std::endl;
-	    file<<"\tsub %sp, %sp, $4"<<std::endl;
+            // file<<"\tstr %r0, [%sp, #-4]"<<std::endl;
+	    // file<<"\tsub %sp, %sp, $4"<<std::endl;
+	    file<<"\tpush {%r0}"<<std::endl;
 	    stack_depth += 4;
         }
       }
 
-      file<<"\tldr %r0, [%sp, #0]"<<std::endl;
-      file<<"\tadd %sp, %sp, $0"<<std::endl;
+      // file<<"\tldr %r0, [%sp, #0]"<<std::endl;
+      // file<<"\tadd %sp, %sp, $0"<<std::endl;
       stack_depth -= 4;
       if (!on_stack) {
         int x;
