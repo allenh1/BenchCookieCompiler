@@ -8,8 +8,9 @@
 
 %token PLUS MINUS TIMES DIVIDE AND GREATEQ LAND LOR LESSEQ
 %token LXOR XOR NOTEQUALS OR TOOGREAT TOOLESS THEN ENDIF
+%token ENDFOR ENDIF DO
 
-%nonassoc IF ELSE THEN ENDIF
+%nonassoc IF ELSE THEN ENDIF FOR DO ENDFOR ELIF
 
 %left PLUS MINUS LOR LESSEQ LXOR XOR NOTEQUALS
 %left TIMES DIVIDE TOOGREAT TOOLESS
@@ -51,6 +52,7 @@ line:
 	read_line
 	| print_line
 	| if_else_block
+	| loop
 	| declare
 	| assignment
         | DONE { return 0; }
@@ -98,6 +100,7 @@ assignment:
 
 if_else_block:
     IF WORD THEN { Command::cmd.startIfBlock($2); }
+//    | ELIF WORD THEN { Command::cmd.startElIfBlock($2); }
     | ENDIF { Command::cmd.endIfBlock(); }
     ;
 
@@ -126,12 +129,32 @@ exp:
     | exp MINUS exp { Command::cmd.addToExpressionStack(strdup("-")); }
     | exp TIMES exp { Command::cmd.addToExpressionStack(strdup("*")); }
     | exp DIVIDE exp { Command::cmd.addToExpressionStack(strdup("/")); }
-/*    | NOT exp { Command::cmd.addToExpressionStack(strdup("!")); }
+    | NOT exp { Command::cmd.addToExpressionStack(strdup("!")); }
     | TWIDLE exp { Command::cmd.addToExpressionStack(strdup("~")); }
     | PLUS exp { Command::cmd.addToExpressionStack(strdup("u+")); }
-    | MINUS exp { Command::cmd.addToExpressionStack(strdup("u-")); } */
+    | MINUS exp { Command::cmd.addToExpressionStack(strdup("u-")); }
     | OPAREN exp EPAREN { }
     ;
+
+bounds:
+    '[' body ']'
+    | line
+    | loop
+    | WHAAAT
+    ;
+
+body:
+    body body
+    | line
+    | loop
+    |
+    ;
+
+loop:
+    FOR WORD DO { Command::cmd.markForLoop($2); }
+    | ENDFOR { Command::cmd.markEndFor(); }
+    ;
+
 %%
 void yyerror(const char * s)
 {

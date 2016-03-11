@@ -46,7 +46,7 @@ public:
 
   enum cmd_type { READ_STRING, READ_INT, PRINT, PRINT_STR, PRINT_NUM, INTGETS,
 		  EXPR, DECL_INT, DECL_DOUBLE, DECL_STRING, DECL_BOOL,
-		  PRINT_BOOL, BEGIN_IF, END_IF };
+		  PRINT_BOOL, BEGIN_IF, END_IF, BEGIN_FOR, END_FOR };
  
   enum exp_type { ADD, SUB, MUL, DIV, MOD, AN_INT, VAR, ASIGN, RESULT, LOGOR,
 		  LOGXOR, LOGAND, BITOR, BITXOR, NEQ, BITAND, EQ, GT, GEQ, LT,
@@ -70,6 +70,8 @@ public:
   void addToExpressionStack(char * arg);
   
   void markEndOfExpression();
+  void markForLoop(char * arg);
+  void markEndFor();
 
   void setFilename(const std::string & _filename)
   { m_filename = _filename; }
@@ -112,6 +114,7 @@ private:
   std::vector<std::string> m_int_assigns;
   std::vector<std::string> m_bool_assigns;
   std::vector<std::string> m_if_deps;
+  std::vector<std::string> m_for_deps;
   std::vector<std::string> m_bool_vars;
   std::vector<std::string> m_fileContents;
   std::vector<std::string> m_int_declarations;

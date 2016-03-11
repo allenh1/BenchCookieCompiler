@@ -13,7 +13,7 @@ void myunputc(int c) {
 %}
 
 %%
-[ \t] { /** discard spaces and tabs! **/ }
+[\t \n] { /** discard spaces and tabs! **/ }
 "print_string" return PRINT_STRING;
 "print_int" return PRINT_INT;
 "print" { return PRINT_THIS; }
@@ -22,6 +22,7 @@ void myunputc(int c) {
 "bool" return BOOL;
 "double" return DOUBLE;
 "string" return STRING;
+"do" return DO;
 "done!" return DONE;
 "please?" return READ; 
 "<--" return GETS;
@@ -39,7 +40,7 @@ void myunputc(int c) {
 "^" return XOR;
 "!" return NOT;
 "~" return TWIDLE;
-"==" return EQUALS;
+"=" return EQUALS;
 "!=" return NOTEQUALS;
 "(" return OPAREN;
 ")" return EPAREN;
@@ -49,6 +50,7 @@ void myunputc(int c) {
 "else" return ELSE;
 "then" return THEN;
 "endif" return ENDIF;
+"for" return FOR;
 
 "+" return PLUS;
 "-" return MINUS;
@@ -68,3 +70,4 @@ void myunputc(int c) {
     strcpy(yylval.string_val, yytext);
     return WORD;
 }
+
