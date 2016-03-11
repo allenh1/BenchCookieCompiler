@@ -1,0 +1,21 @@
+print "Let's make a multiplication table!\n" ?
+print "Who's table did you forget? " ?
+int please? > num
+
+int count ?
+int test ?
+int temp ?
+
+count <-- 0 ?
+test <-- count <= 12 ?
+
+for test do
+  temp <-- num * count ?
+  print_int num ? print " * " ? print_int count ?
+  print " = " ? print_int temp ? print "\n" ?
+
+  count <-- count + 1 ?
+  test <-- count <= 12 ?
+endfor
+
+done!

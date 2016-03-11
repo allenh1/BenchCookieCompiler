@@ -223,6 +223,7 @@ void Command::doMain(std::ostream & file)
 	file<<"FOR"<<forndex<<":";
 	file<<"\tmov %r8, %r9"<<std::endl;
 	file<<"\tldr %r8, [%r8, #"<<4 * z<<"]"<<std::endl;
+	file<<"\tldr %r8, [%r8]"<<std::endl;
       } else if (y < m_int_vars.size()) {
 	file<<"FOR"<<forndex<<":";
 	file<<"\tmov %r8, =I"<<y<<std::endl;
@@ -235,6 +236,9 @@ void Command::doMain(std::ostream & file)
 
       file<<"\tcmp %r8, $0"<<std::endl;
       file<<"\tbeq END_FOR"<<forndex<<std::endl;
+    } else if (m_execOrder[x] == cmd_type::END_FOR) {
+      file<<"b FOR"<<forndex<<std::endl;
+      file<<"END_FOR"<<forndex++<<":"<<std::endl;
     } else if (m_execOrder[x] == cmd_type::END_IF) {
       file<<"END_IF"<<ifndex-1<<":"<<std::endl;
     } else if (m_execOrder[x] == cmd_type::READ_INT) {
@@ -334,7 +338,8 @@ void Command::doMain(std::ostream & file)
 	  for (z = 0; z < m_int_declarations.size(); ++z) {
 	    if (m_int_declarations[z] == m_int_vars[y]) break;
 	  } if (z != m_int_declarations.size()) {
-	    file<<"\tldr %r1, [locals, #"<<4 * z<<"]"<<std::endl;
+	    file<<"\tmov %r1, %r9"<<std::endl;
+	    file<<"\tldr %r1, [%r9, #"<<4 * z<<"]"<<std::endl;
 	    file<<"\tldr %r1, [%r1]"<<std::endl;
 	  } else {
 	    file<<"\tldr %r1, =I"<<y<<std::endl;
@@ -422,8 +427,8 @@ void Command::doMain(std::ostream & file)
 	    exit(101);
           do_default:
             file<<"\tstr %r0, [%sp, #-4]"<<std::endl;
-	          file<<"\tsub %sp, %sp, $4"<<std::endl;
-	          stack_depth += 4;
+	    file<<"\tsub %sp, %sp, $4"<<std::endl;
+	    stack_depth += 4;
         }
       }
 
@@ -437,7 +442,7 @@ void Command::doMain(std::ostream & file)
        }
 	     file<<"\tldr %r3, =I"<<x<<std::endl;
       } else {
-	     file<<"\tldr %r3, =locals"<<std::endl;
+	     file<<"\tmov %r3, %r9"<<std::endl;
 	     file<<"\tldr %r3, [%r3, #"<<*last_z * 4<<"]"<<std::endl;
 	     delete last_z;
       }

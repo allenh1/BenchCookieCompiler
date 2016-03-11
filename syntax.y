@@ -8,7 +8,7 @@
 
 %token PLUS MINUS TIMES DIVIDE AND GREATEQ LAND LOR LESSEQ
 %token LXOR XOR NOTEQUALS OR TOOGREAT TOOLESS THEN ENDIF
-%token ENDFOR ENDIF DO
+%token ENDFOR DO
 
 %nonassoc IF ELSE THEN ENDIF FOR DO ENDFOR ELIF
 
@@ -134,20 +134,6 @@ exp:
     | PLUS exp { Command::cmd.addToExpressionStack(strdup("u+")); }
     | MINUS exp { Command::cmd.addToExpressionStack(strdup("u-")); }
     | OPAREN exp EPAREN { }
-    ;
-
-bounds:
-    '[' body ']'
-    | line
-    | loop
-    | WHAAAT
-    ;
-
-body:
-    body body
-    | line
-    | loop
-    |
     ;
 
 loop:

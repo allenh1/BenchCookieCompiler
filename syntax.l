@@ -51,6 +51,7 @@ void myunputc(int c) {
 "then" return THEN;
 "endif" return ENDIF;
 "for" return FOR;
+"endfor" return ENDFOR;
 
 "+" return PLUS;
 "-" return MINUS;
