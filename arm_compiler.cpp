@@ -1,4 +1,6 @@
 // allocate enough space for drew-sized strings.
+#ifndef ARM_COMPILER_SOURCE
+#define ARM_COMPILER_SOURCE
 #define MAX_STRING_SIZE 100
 void Command::doBSS(std::ostream & file)
 {
@@ -788,3 +790,4 @@ void Command::writeAssembly()
   file<<"\t.end"<<std::endl;
   file.close();
 }
+#endif
