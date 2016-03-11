@@ -1,8 +1,0 @@
-#set mode c_function
-
-func strlen ( str ) :
-  int ptr ? int test ?
-  ptr <-- str ?
-  test <-- 
-  for
-end

@@ -1,7 +1,3 @@
-#
-# CS252 - Shell Project
-#
-#Use GNU compiler
 cc = gcc -g
 CC = g++ --std=c++14 -g
 
@@ -18,7 +14,7 @@ y.tab.o: syntax.y
 	$(YACC) -d syntax.y
 	$(CC) -c y.tab.c
 
-command.o: command.cc
+command.o: command.cc arm_compiler.cpp
 	$(CC) -c command.cc
 
 bcc: y.tab.o lex.yy.o command.o
