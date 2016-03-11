@@ -231,7 +231,7 @@ void Command::doMain(std::ostream & file)
 	  stack_depth += 4; continue;
         } else if (aExpType == AN_INT) {
           file<<"\tmov %r1, $"<<a.int_arg<<std::endl;
-	  file<<"\tpush {%r1} "<<std::endl;
+	  file<<"\tpush {%r1}"<<std::endl;
 	  stack_depth += 4;
 	  continue;
         }
@@ -240,6 +240,7 @@ void Command::doMain(std::ostream & file)
           // file<<std::endl<<"\tldr %r1, [%sp]"<<std::endl;
 	  // file<<"\tldr %r2, [%sp, #4]"<<std::endl;
 	  // file<<"\tadd %sp, %sp, $8"<<std::endl;
+	  // {%r1}"<<std::endl;
 	  file<<"\tpop {%r1, %r2}"<<std::endl;
 	  stack_depth -= 8;
 	} else continue;
@@ -316,6 +317,7 @@ void Command::doMain(std::ostream & file)
 
       // file<<"\tldr %r0, [%sp, #0]"<<std::endl;
       // file<<"\tadd %sp, %sp, $0"<<std::endl;
+      file<<"\tpop {%r0}"<<std::endl;
       stack_depth -= 4;
       if (!on_stack) {
         int x;
