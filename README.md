@@ -27,7 +27,9 @@ ToDo:
  * ~~Compile automatically.~~
  * ~~Bool variables~~                         <----------- Assigned to Hunter
  * ~~Arithmetic Expressions~~                 <----------- Assigned to Hunter
- * ~~If statements~~                              <----------- Assigned to Hunter
+ * ~~If statements~~                          <----------- Assigned to Hunter
+ * ~~For loops~~			      <----------- Assigned to Hunter
+ * Creation of C subroutine		      <----------- Assigned to Hunter
  * Line Comments                              <----------- Assigned to Drew
  * Block Comments                             <----------- Assigned to Drew
  * Float variables, Double variables          <----------- Assigned to Hunter
