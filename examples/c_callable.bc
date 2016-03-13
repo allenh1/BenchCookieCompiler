@@ -1,7 +1,24 @@
-#set mode c_function
+@;
+ ; This is a simple template for implementing
+ ; the c-callable function syntax. This will
+ ; not compile. This is only a proposal for
+ ; the syntax.
+@;
 
-func strlen ( str ) :
-  int ptr ? int test ?
-  ptr <-- str ?
+declare c_function ?
 
-  for 
+func strlen ( char_ptr str ) :
+  char_ptr temp ?
+  temp <-- str ?
+
+  int test ?
+  test <-- deref temp ?
+  
+  for test do
+    temp <-- temp + 1 ?
+    test <-- deref temp ?
+  endfor
+
+  int length ?
+  length <-- temp - str ?
+end --> [ length ] @ this is a return list -- can be multiple vars.
