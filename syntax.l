@@ -18,14 +18,24 @@ void myunputc(int c) {
 "print_int" return PRINT_INT;
 "print" { return PRINT_THIS; }
 "?" { return WHAAAT; }
+":" { return COLON; }
 "int"  return INT;
+"char" return CHAR;
+"deref" return DEREF;
+"func" return FUNC;
+"end" return END;
+"int_ptr" return INT_PTR;
+"char_ptr" return CHAR_PTR;
 "bool" return BOOL;
 "double" return DOUBLE;
+"declare" return DECLARE;
+"c_function" return C_FUNC;
 "string" return STRING;
 "do" return DO;
 "done!" return DONE;
 "please?" return READ; 
 "<--" return GETS;
+"-->" return POINT_TO;
 ">" return GREAT;
 ">=" return GREATEQ;
 ">>" return TOOGREAT;

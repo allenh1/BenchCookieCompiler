@@ -32,11 +32,23 @@ struct int_assign {
   int new_value;
 };
 
+struct string_assign {
+  std::string m_name;
+  std::string new_value;
+};
+
 struct math_expression {
   int int_arg;
   double double_arg;
+  char char_arg;
   std::string pirate_name;
   int expr_type = -1;
+};
+
+struct pointer_assignment {
+  ssize_t vardex;
+  ssize_t pointdex;
+  int var_type;
 };
 
 class Command
@@ -45,19 +57,21 @@ public:
   Command(){};
 
   enum cmd_type { READ_STRING, READ_INT, PRINT, PRINT_STR, PRINT_NUM, INTGETS,
-		  EXPR, DECL_INT, DECL_DOUBLE, DECL_STRING, DECL_BOOL,
-		  PRINT_BOOL, BEGIN_IF, END_IF, BEGIN_FOR, END_FOR };
+		  EXPR, DECL_INT, DECL_DOUBLE, DECL_STRING, DECL_BOOL, STRINGGETS,
+		  PRINT_BOOL, BEGIN_IF, END_IF, BEGIN_FOR, END_FOR, PTRGETS, ENDFUNC };
  
   enum exp_type { ADD, SUB, MUL, DIV, MOD, AN_INT, VAR, ASIGN, RESULT, LOGOR,
 		  LOGXOR, LOGAND, BITOR, BITXOR, NEQ, BITAND, EQ, GT, GEQ, LT,
-		  LEQ, SHIFTR, SHIFTL, LOGNOT, COMP, UPLUS, UMINUS };
+		  LEQ, SHIFTR, SHIFTL, LOGNOT, COMP, UPLUS, UMINUS, PTRDEREF };
 
-  enum var_type { HINT, HDOUBLE, HFLOAT, HBOOL };
+  enum var_type { HINT, HDOUBLE, HFLOAT, HBOOL, HSTRING, HCHAR };
   
   void addPrintInt(char * arg);
   void addPrintString(char * arg);
   void addPrintLiteral(char * arg);
-
+  void addToArgList(char *, char *);
+  void addToReturnList(char *);
+  
   void addReadInt(char * arg);
   void addReadString(char * arg);
 
@@ -65,22 +79,32 @@ public:
   void declString(char * arg);
   void declBool(char * arg);
   void declInt(char * arg);
+  void declPointer(char * dom, char * cod);
   
   void addIntAssignment(char * arg);
   void addToExpressionStack(char * arg);
-  
+
+  void markFunctionEnding();
   void markEndOfExpression();
   void markForLoop(char * arg);
   void markEndFor();
 
+  void startFunctionBody(char * arg);
+  void markEndOfFunction();
+
   void setFilename(const std::string & _filename)
   { m_filename = _filename; }
+
+  void setCFunc(const bool & _is_c_callable)
+  { m_is_c_callable = _is_c_callable; }
 
   void writeAssembly();
 
   void startIfBlock(char * arg);
   void endIfBlock();
-  
+
+  const bool & isCCallable(){ return m_is_c_callable; }
+ 
   static std::string current_string;
   static Command cmd;
   static ssize_t line_num;
@@ -106,20 +130,31 @@ private:
   std::vector<std::string> m_literals;
 
   func m_main;
-  
+
+  std::string m_function_name;
+
   std::vector<std::string> m_print_strings;
   std::vector<std::string> m_print_ints;
   std::vector<std::string> m_print_bools;
   std::vector<std::string> m_lines;
   std::vector<std::string> m_int_assigns;
   std::vector<std::string> m_bool_assigns;
+  std::vector<std::string> m_string_assigns;
+  std::vector<pointer_assignment> m_pointer_assigns;
   std::vector<std::string> m_if_deps;
   std::vector<std::string> m_for_deps;
   std::vector<std::string> m_bool_vars;
   std::vector<std::string> m_fileContents;
   std::vector<std::string> m_int_declarations;
+  std::vector<std::string> m_string_declarations;
+  std::vector<std::string> m_int_pointers;
+  std::vector<std::string> m_char_pointers;
   std::vector<cmd_type> m_execOrder;
   std::stack<math_expression> m_current_stack;
+  std::vector<std::string> m_current_args;
+  std::vector<std::string> m_current_returns;
   std::vector<std::stack<math_expression> *> m_evaluations;
+
+  bool m_is_c_callable = false;
 };
 #endif

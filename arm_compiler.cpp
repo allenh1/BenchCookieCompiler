@@ -43,7 +43,9 @@ void Command::doMain(std::ostream & file)
 {
   int y; size_t divcount = 0, nszcount = 0;
   const size_t local_count = 0;// Idk, yo. Just... somewhere.
-  file<<"main:"<<std::endl;
+  if (m_is_c_callable) file<<m_function_name<<":"<<std::endl;
+  else file<<"main:"<<std::endl;
+
   file<<"\tldr %r9, =locals"<<std::endl;
   file<<"\t@ Make space for locals"<<std::endl;
   /**
@@ -227,21 +229,14 @@ void Command::doMain(std::ostream & file)
 	    file<<"\tldr %r1, [%r1]"<<std::endl;
 	  }
 	  file<<"\tpush {%r1}"<<std::endl;
-	  // file<<"\tsub %sp, %sp, $4"<<std::endl;
 	  stack_depth += 4; continue;
         } else if (aExpType == AN_INT) {
           file<<"\tmov %r1, $"<<a.int_arg<<std::endl;
 	  file<<"\tpush {%r1}"<<std::endl;
 	  stack_depth += 4;
 	  continue;
-        }
-
-	if (stack_depth >= 8) {
-          // file<<std::endl<<"\tldr %r1, [%sp]"<<std::endl;
-	  // file<<"\tldr %r2, [%sp, #4]"<<std::endl;
-	  // file<<"\tadd %sp, %sp, $8"<<std::endl;
-	  // {%r1}"<<std::endl;
-	  file<<"\tpop {%r1, %r2}"<<std::endl;
+        } if (stack_depth >= 8) {
+     	  file<<"\tpop {%r1, %r2}"<<std::endl;
 	  stack_depth -= 8;
 	} else continue;
         switch (type) {
@@ -275,7 +270,7 @@ void Command::doMain(std::ostream & file)
 	    file<<std::endl;
 	    file<<"\tbgt NOSETZERO"<<nszcount<<std::endl;
 	    file<<"\tmov %r0, $0"<<std::endl;
-	    file<<"NOSETZERO"<<nszcount<<": @label used to set as true"<<std::endl;
+	    file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
 	    nszcount++;
 	    goto do_default;
 	  case GEQ:
@@ -283,7 +278,7 @@ void Command::doMain(std::ostream & file)
 	    file<<"\tcmp %r2, %r1"<<std::endl;
 	    file<<"\tbge NOSETZERO"<<nszcount<<std::endl;
 	    file<<"\tmov %r0, $0"<<std::endl;
-	    file<<"NOSETZERO"<<nszcount<<": @label used to set as true"<<std::endl;
+	    file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
 	    nszcount++;
 	    goto do_default;
 	  case LT:
@@ -291,7 +286,7 @@ void Command::doMain(std::ostream & file)
 	    file<<"\tcmp %r2, %r1"<<std::endl;
 	    file<<"\tblt NOSETZERO"<<nszcount<<std::endl;
 	    file<<"\tmov %r0, $0"<<std::endl;
-	    file<<"NOSETZERO"<<nszcount<<": @label used to set as true"<<std::endl;
+	    file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
 	    nszcount++;
 	    goto do_default;
 	  case LEQ:
@@ -299,7 +294,15 @@ void Command::doMain(std::ostream & file)
 	    file<<"\tcmp %r2, %r1"<<std::endl;
 	    file<<"\tble NOSETZERO"<<nszcount<<std::endl;
 	    file<<"\tmov %r0, $0"<<std::endl;
-	    file<<"NOSETZERO"<<nszcount<<": @label used to set as true"<<std::endl;
+	    file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+	    nszcount++;
+	    goto do_default;
+	  case EQ:
+	    file<<"\tmov %r0, $1"<<std::endl;
+	    file<<"\tcmp %r2, %r1"<<std::endl;
+	    file<<"\tble NOSETZERO"<<nszcount<<std::endl;
+	    file<<"\tmov %r0, $0"<<std::endl;
+	    file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
 	    nszcount++;
 	    goto do_default;
           default:
@@ -361,11 +364,11 @@ void Command::writeAssembly()
 
   file<<std::endl<<std::endl;
   file<<"\t.text"<<std::endl;
-  file<<"\t.global main"<<std::endl;
+  if (!m_is_c_callable) file<<"\t.global main"<<std::endl;
   file<<"\t.global printf"<<std::endl;
   file<<"\t.global scanf"<<std::endl;
   file<<"\t.global malloc"<<std::endl;
-
+  if (m_is_c_callable) file<<"\texport "<<m_function_name<<std::endl;
   doMain(file);
 
   /**
@@ -390,12 +393,46 @@ void Command::writeAssembly()
    * @DrewBarthel: printf is a toilet.
    */
   file<<"\tbl fflush"<<std::endl;
-  file<<"\tmov %r7, $1"<<std::endl;
 
   /** Toilet has been flushed **/
 
-  file<<"\tswi $0"<<std::endl;
-  file<<"\t.end"<<std::endl;
-  file.close();
+  if (!m_is_c_callable) {
+    file<<"\tmov %r7, $1"<<std::endl;
+
+    file<<"\tswi $0"<<std::endl;
+    file<<"\t.end"<<std::endl;
+    file.close();
+  } else {
+    if (m_current_returns.size() > 3) {
+      /** @todo **/
+    } else {
+      /**
+       * Load the values into r0, r1, r2, r3 as necessary.
+       */
+      file<<"\tmov %r9, =locals"<<std::endl;
+      for (int x = 0; x < m_current_returns.size(); ++x) {
+	int y, z;
+	for (y = 0; y < m_int_vars.size(); ++y) {
+            if (m_int_vars[y] == m_current_returns[x]) break;
+          } if (y == m_int_vars.size()) {
+            std::cerr<<"Error: returned variable "<<m_current_returns[x]
+		     <<" was not declared!"<<std::endl;
+            exit(9);
+          } for (z = 0; z < m_int_declarations.size(); ++z) {
+	    if (m_int_declarations[z] == m_int_vars[y]) break;
+	  } if (z != m_int_declarations.size()) {
+	    file<<"\tmov %r6, %r9"<<std::endl;
+	    file<<"\tldr %r6, [%r9, #"<<4 * z<<"]"<<std::endl;
+	    file<<"\tldr %r6, [%r6]"<<std::endl;
+	  } else {
+	    file<<"\tldr %r6, =I"<<y<<std::endl;
+	    file<<"\tldr %r6, [%r6]"<<std::endl;
+	  }
+	  file<<"\tmov %r"<<x<<", %r6"<<std::endl;
+      }
+    }
+    file<<"\tbx lr"<<std::endl;
+    file<<"\t.end"<<std::endl;
+  }
 }// allocate enough space for drew-sized strings.
 #endif

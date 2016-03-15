@@ -4,14 +4,17 @@
 #define MAX_STRING_SIZE 100
 void Command::doBSS(std::ostream & file)
 {
-  file<<"\t.bss"<<std::endl<<std::endl;
+  file<<"\tsection .bss"<<std::endl<<std::endl;
   for (int x = 0; x < m_string_vars.size(); ++x) {
-    file<<"\t.lcomm IS"<<x<<", "<<MAX_STRING_SIZE<<std::endl;
+    file<<"IS"<<x<<"\tdb "<<MAX_STRING_SIZE<<std::endl;
+    file<<"\tdup(?)"<<std::endl;
   }
 
   /** Place locals' linked list **/
 
-  file<<"\t.lcomm locals, 400";
+  file<<"locals\tdb 400"<<std::endl;
+  file<<"\tdup(?)"<<std::endl;
+  // file<<"\t.lcomm locals, 400";
   file<<std::endl;
 }
 
