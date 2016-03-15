@@ -234,7 +234,7 @@ void Command::doMain(std::ostream & file)
 	  file<<"\tpush {%r1}"<<std::endl;
 	  stack_depth += 4;
 	  continue;
-        } else if (aExpType == PTRDEREF) {
+        } else if (stack_depth >= 8) {
      	  file<<"\tpop {%r1, %r2}"<<std::endl;
 	  stack_depth -= 8;
 	} else continue;
