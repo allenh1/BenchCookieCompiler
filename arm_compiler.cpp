@@ -91,7 +91,6 @@ void Command::doMain(std::ostream & file)
 	std::cerr<<" not yet declared!"<<std::endl;
 	exit(6);
       }
-
       file<<"IF"<<ifndex<<":\tcmp %r0, $0"<<std::endl;
       file<<"\tbeq END_IF"<<ifndex<<std::endl;
       ++ifndex;
@@ -214,7 +213,7 @@ void Command::doMain(std::ostream & file)
         if (aExpType == VAR)  {
           for (y = 0; y < m_int_vars.size(); ++y) {
             if (m_int_vars[y] == a.pirate_name) break;
-          } if (y == m_int_vars.size()) {
+	  } if (y == m_int_vars.size()) {
             std::cerr<<"Error: variable "<<a.pirate_name<<" was not declared!"<<std::endl;
             exit(3);
           } int z;
@@ -235,76 +234,78 @@ void Command::doMain(std::ostream & file)
 	  file<<"\tpush {%r1}"<<std::endl;
 	  stack_depth += 4;
 	  continue;
-        } if (stack_depth >= 8) {
+        } else if (aExpType == PTRDEREF) {
      	  file<<"\tpop {%r1, %r2}"<<std::endl;
 	  stack_depth -= 8;
 	} else continue;
         switch (type) {
-          case ADD:
-            /**
-             * Oh, how I want to use a comma expression...
-             * You know, the stack_push((b=stack_pop(),a=stack_pop(),a+b))
-             * kind of comma expresion.
-             */
-            file<<"\tadd %r0, %r1, %r2"<<std::endl;
-            goto do_default;
-          case SUB:
-            file<<"\tsub %r0, %r2, %r1"<<std::endl;
-            goto do_default;
-          case MUL:
-            file<<"\tmul %r0, %r1, %r2"<<std::endl;
-            goto do_default;
-          case DIV:
-	    /* @todo case divide by zero */
-	    file<<"\tmov %r0, $0"<<std::endl<<std::endl;
-	    file<<"DIVIDE"<<divcount++<<": cmp %r1, %r2"<<std::endl;
-	    file<<"\t bgt DONEDIVIDE"<<divcount-1<<std::endl;
-	    file<<"\t sub %r2, %r2, %r1"<<std::endl;
-	    file<<"\t add %r0, $1"<<std::endl;
-            file<<"\t b DIVIDE"<<divcount-1<<std::endl;
-	    file<<"DONEDIVIDE"<<divcount-1<<":"<<std::endl;
-            goto do_default;
-	  case GT:
-	    file<<"\tmov %r0, $1"<<std::endl;
-	    file<<"\tcmp %r2, %r1"<<"\t@ Backwards because stack"<<std::endl;
-	    file<<std::endl;
-	    file<<"\tbgt NOSETZERO"<<nszcount<<std::endl;
-	    file<<"\tmov %r0, $0"<<std::endl;
-	    file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
-	    nszcount++;
-	    goto do_default;
-	  case GEQ:
-	    file<<"\tmov %r0, $1"<<std::endl;
-	    file<<"\tcmp %r2, %r1"<<std::endl;
-	    file<<"\tbge NOSETZERO"<<nszcount<<std::endl;
-	    file<<"\tmov %r0, $0"<<std::endl;
-	    file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
-	    nszcount++;
-	    goto do_default;
-	  case LT:
-	    file<<"\tmov %r0, $1"<<std::endl;
-	    file<<"\tcmp %r2, %r1"<<std::endl;
-	    file<<"\tblt NOSETZERO"<<nszcount<<std::endl;
-	    file<<"\tmov %r0, $0"<<std::endl;
-	    file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
-	    nszcount++;
-	    goto do_default;
-	  case LEQ:
-	    file<<"\tmov %r0, $1"<<std::endl;
-	    file<<"\tcmp %r2, %r1"<<std::endl;
-	    file<<"\tble NOSETZERO"<<nszcount<<std::endl;
-	    file<<"\tmov %r0, $0"<<std::endl;
-	    file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
-	    nszcount++;
-	    goto do_default;
-	  case EQ:
-	    file<<"\tmov %r0, $1"<<std::endl;
-	    file<<"\tcmp %r2, %r1"<<std::endl;
-	    file<<"\tble NOSETZERO"<<nszcount<<std::endl;
-	    file<<"\tmov %r0, $0"<<std::endl;
-	    file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
-	    nszcount++;
-	    goto do_default;
+	case ADD:
+	  /**
+	   * Oh, how I want to use a comma expression...
+	   * You know, the stack_push((b=stack_pop(),a=stack_pop(),a+b))
+	   * kind of comma expresion.
+	   */
+	  file<<"\tadd %r0, %r1, %r2"<<std::endl;
+	  goto do_default;
+	case SUB:
+	  file<<"\tsub %r0, %r2, %r1"<<std::endl;
+	  goto do_default;
+	case MUL:
+	  file<<"\tmul %r0, %r1, %r2"<<std::endl;
+	  goto do_default;
+	case DIV:
+	  /* @todo case divide by zero */
+	  file<<"\tmov %r0, $0"<<std::endl<<std::endl;
+	  file<<"DIVIDE"<<divcount++<<": cmp %r1, %r2"<<std::endl;
+	  file<<"\t bgt DONEDIVIDE"<<divcount-1<<std::endl;
+	  file<<"\t sub %r2, %r2, %r1"<<std::endl;
+	  file<<"\t add %r0, $1"<<std::endl;
+	  file<<"\t b DIVIDE"<<divcount-1<<std::endl;
+	  file<<"DONEDIVIDE"<<divcount-1<<":"<<std::endl;
+	  goto do_default;
+	case GT:
+	  file<<"\tmov %r0, $1"<<std::endl;
+	  file<<"\tcmp %r2, %r1"<<"\t@ Backwards because stack"<<std::endl;
+	  file<<std::endl;
+	  file<<"\tbgt NOSETZERO"<<nszcount<<std::endl;
+	  file<<"\tmov %r0, $0"<<std::endl;
+	  file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+	  nszcount++;
+	  goto do_default;
+	case GEQ:
+	  file<<"\tmov %r0, $1"<<std::endl;
+	  file<<"\tcmp %r2, %r1"<<std::endl;
+	  file<<"\tbge NOSETZERO"<<nszcount<<std::endl;
+	  file<<"\tmov %r0, $0"<<std::endl;
+	  file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+	  nszcount++;
+	  goto do_default;
+	case LT:
+	  file<<"\tmov %r0, $1"<<std::endl;
+	  file<<"\tcmp %r2, %r1"<<std::endl;
+	  file<<"\tblt NOSETZERO"<<nszcount<<std::endl;
+	  file<<"\tmov %r0, $0"<<std::endl;
+	  file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+	  nszcount++;
+	  goto do_default;
+	case LEQ:
+	  file<<"\tmov %r0, $1"<<std::endl;
+	  file<<"\tcmp %r2, %r1"<<std::endl;
+	  file<<"\tble NOSETZERO"<<nszcount<<std::endl;
+	  file<<"\tmov %r0, $0"<<std::endl;
+	  file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+	  nszcount++;
+	  goto do_default;
+	case EQ:
+	  file<<"\tmov %r0, $1"<<std::endl;
+	  file<<"\tcmp %r2, %r1"<<std::endl;
+	  file<<"\tble NOSETZERO"<<nszcount<<std::endl;
+	  file<<"\tmov %r0, $0"<<std::endl;
+	  file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+	  nszcount++;
+	  goto do_default;
+	case PTRDEREF:
+	  goto do_default;
           default:
 	    std::cerr<<"Welp. You did it. You tried it."<<std::endl;
 	    std::cerr<<"This is what happens. You get mad."<<std::endl;
