@@ -20,6 +20,9 @@ command.o: command.cc arm_compiler.cpp
 bcc: y.tab.o lex.yy.o command.o
 	$(CC) -o bcc lex.yy.o y.tab.o command.o -lfl
 
+install:
+	cp ./bcc /usr/bin/bcc
+
 clean:
 	rm -f lex.yy.c y.tab.c y.tab.h bcc *.o
 

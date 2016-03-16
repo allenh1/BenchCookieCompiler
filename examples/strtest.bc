@@ -1,0 +1,30 @@
+int pluseq ?
+int subteq ?
+int multeq ?
+int divdeq ?
+
+print "Enter an operator: " ?
+string please? > operator
+
+pluseq <-- operator = "+" ?
+subteq <-- operator = "-" ?
+multeq <-- operator = "*" ?
+divdeq <-- operator = "/" ?
+
+if pluseq then
+  print "That's a plus.\n" ?
+endif
+
+if subteq then
+  print "That's a minus.\n" ?
+endif
+
+if multeq then
+  print "That's a multiplication sign.\n" ?
+endif
+
+if divdeq then
+  print "That's a division sign.\n" ?
+endif
+
+done!

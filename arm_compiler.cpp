@@ -41,7 +41,8 @@ void Command::doData(std::ostream & file)
 #define INTGR 67
 #define STRNG 68
 
-void Command::push_variable(std::string var_name, std::stack<unsigned short> & vartype, std::ostream & file)
+void Command::push_variable(std::string var_name, std::stack<unsigned short> & vartype,
+			    std::ostream & file)
 {
   std::string varname = var_name;
   for (int x = 0; x < m_int_declarations.size(); ++x) {
@@ -66,13 +67,16 @@ void Command::push_variable(std::string var_name, std::stack<unsigned short> & v
   }
   
   for (int x = 0; x < m_string_vars.size(); ++x) {
-    if (m_int_vars[x] == varname) {
+    if (m_string_vars[x] == varname) {
       file<<"\tldr %r1, =IS"<<x<<std::endl;
       file<<"\tpush {%r1}"<<std::endl;
       vartype.push(STRNG);
       return;
     }
   }
+
+  std::cerr<<"Error: could not resolve variable \"";
+  std::cerr<<varname<<"\"."<<std::endl;
 }
 
 void Command::doMain(std::ostream & file)
@@ -221,7 +225,7 @@ void Command::doMain(std::ostream & file)
       ++pbooldex;
     } else if (m_execOrder[x] == cmd_type::INTGETS) {
       std::string int_gets = m_int_assigns[intassdex];
-      ssize_t offset;
+      ssize_t offset; 
       for (y = 0; y < m_int_vars.size(); ++y) {
 	if (m_int_vars[y] == m_int_assigns[intassdex]) break;
       } int z; bool on_stack = false; int * last_z = new int;
@@ -242,21 +246,23 @@ void Command::doMain(std::ostream & file)
       std::stack<math_expression> eval;// = *expr;
       for(; !expr->empty(); eval.push(expr->top()), expr->pop(), 1);
       std::stack<math_expression> curr;
+      unsigned short t1, t2;
 
       for (; eval.size();) {
         math_expression a = eval.top(); eval.pop();
 	Command::exp_type type = static_cast<Command::exp_type>(a.expr_type);
 	exp_type aExpType = static_cast<Command::exp_type>(a.expr_type);
-	unsigned short t1, t2;
         if (aExpType == VAR)  {
           push_variable(a.pirate_name, arg_types, file);
+	  stack_depth += 4;
+	  continue;
         } else if (aExpType == AN_INT) {
           file<<"\tmov %r1, $"<<a.int_arg<<std::endl;
 	  file<<"\tpush {%r1}"<<std::endl;
 	  stack_depth += 4;
 	  arg_types.push(INTGR);
 	  continue;
-        } if (aExpType == LITERAL) {
+        } else if (aExpType == LITERAL) {
 	  arg_types.push(STRNG);
 	  ssize_t idx = m_exp_literals.front();
 	  m_exp_literals.pop();
@@ -269,7 +275,9 @@ void Command::doMain(std::ostream & file)
 	  file<<"\tmov %r1, [%r1]"<<std::endl;
 	  file<<"\tpush {%r1}"<<std::endl;
 	  continue;
-	} else if (stack_depth >= 8) {
+	}
+
+	if (stack_depth >= 8) {
      	  file<<"\tpop {%r1, %r2}"<<std::endl;
 	  stack_depth -= 8;
 	} else continue;
@@ -349,7 +357,7 @@ void Command::doMain(std::ostream & file)
 	  goto do_default;
 	case EQ:
 	  t1 = arg_types.top(); arg_types.pop();
-	  t2 = arg_types.top(); arg_types.pop();
+	  t2 = STRNG;// arg_types.top(); arg_types.pop();
 	  if (t1 == STRNG && t2 == STRNG) {
 	    file<<"\tmov %r0, %r1"<<std::endl;
 	    file<<"\tmov %r1, %r2"<<std::endl;
@@ -362,15 +370,13 @@ void Command::doMain(std::ostream & file)
 	    file<<"\tbeq NOSETZERO"<<nszcount<<std::endl;
 	    file<<"\tmov %r0, $0"<<std::endl;
 	    file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
-	    nszcount++;
-	    goto do_default;
+	  } else {
+	    file<<"\tmov %r0, $1"<<std::endl;
+	    file<<"\tcmp %r2, %r1"<<std::endl;
+	    file<<"\tble NOSETZERO"<<nszcount<<std::endl;
+	    file<<"\tmov %r0, $0"<<std::endl;
+	    file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
 	  }
-
-	  file<<"\tmov %r0, $1"<<std::endl;
-	  file<<"\tcmp %r2, %r1"<<std::endl;
-	  file<<"\tble NOSETZERO"<<nszcount<<std::endl;
-	  file<<"\tmov %r0, $0"<<std::endl;
-	  file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
 	  nszcount++;
 	  goto do_default;
           default:
