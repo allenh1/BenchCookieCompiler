@@ -6,7 +6,7 @@
  ; is prompted for their first and
  ; last names. Then we print out their
  ; first and last names.
- ;@
+@;
 
 print "Enter your first name: " ?
 string please? > first

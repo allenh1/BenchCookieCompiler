@@ -15,10 +15,10 @@ void myunputc(int c) {
 %x BLK_COMMENT
 %x LINE_COMMENT
 %%
-[\t \n] { /** discard spaces and tabs! **/ }
+[\t \n]+ { /** discard spaces and tabs! **/ }
 
 <INITIAL>"@;" BEGIN(BLK_COMMENT);
-<BLK_COMMENT>";@" BEGIN(INITIAL);
+<BLK_COMMENT>"@;" BEGIN(INITIAL);
 <BLK_COMMENT>[.\n]+  { /** discard anything in a comment block **/ }
 
 <INITIAL>"@" BEGIN(LINE_COMMENT);
