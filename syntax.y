@@ -4,7 +4,7 @@
 
 %token PRINT_STRING INT READ GREAT STRING DONE EPAREN CHAR 
 %token PRINT_INT WHAAAT PRINT_THIS NOTOKEN NEW_LINE BOOL ELSE
-%token OBRACKET EBRACKET IF COLON OPAREN EQUALS LESS GETS
+%token OBRACKET EBRACKET IF COLON OPAREN EQUALS LESS GETS LINE
 
 %token PLUS MINUS TIMES DIVIDE AND GREATEQ LAND LOR LESSEQ
 %token LXOR XOR NOTEQUALS OR TOOGREAT TOOLESS THEN ENDIF
@@ -19,6 +19,7 @@
 %left OPAREN EPAREN
 
 %right GETS NOT TWIDLE
+%right UNARY
 
 %union	{
 	char * string_val;
@@ -64,6 +65,7 @@ line:
 read_line:
     INT READ GREAT WORD { Command::cmd.addReadInt($4); }
     | STRING READ GREAT WORD { Command::cmd.addReadString($4); }
+    | LINE READ GREAT WORD { Command::cmd.addReadLine($4); }
     ;
 
 print_line:
@@ -140,11 +142,11 @@ exp:
     | exp MINUS exp { Command::cmd.addToExpressionStack(strdup("-")); }
     | exp TIMES exp { Command::cmd.addToExpressionStack(strdup("*")); }
     | exp DIVIDE exp { Command::cmd.addToExpressionStack(strdup("/")); }
-    | NOT exp { Command::cmd.addToExpressionStack(strdup("!")); }
-    | TWIDLE exp { Command::cmd.addToExpressionStack(strdup("~")); }
-    | PLUS exp { Command::cmd.addToExpressionStack(strdup("u+")); }
-    | MINUS exp { Command::cmd.addToExpressionStack(strdup("u-")); }
-    | DEREF exp { Command::cmd.addToExpressionStack(strdup("deref")); }
+    | NOT exp %prec UNARY { Command::cmd.addToExpressionStack(strdup("!")); }
+    | TWIDLE exp %prec UNARY { Command::cmd.addToExpressionStack(strdup("~")); }
+    | PLUS exp %prec UNARY { Command::cmd.addToExpressionStack(strdup("u+")); }
+    | MINUS exp %prec UNARY { Command::cmd.addToExpressionStack(strdup("u-")); }
+    | DEREF exp %prec UNARY { Command::cmd.addToExpressionStack(strdup("deref")); }
     | OPAREN exp EPAREN { }
     ;
 
@@ -168,9 +170,11 @@ function:
       FUNC WORD '(' arglist ')' COLON {
 	Command::cmd.startFunctionBody($2);
       }
+      | FUNC WORD ':' { Command::cmd.setFunctionName($2); }
       | END POINT_TO OBRACKET returns EBRACKET {
 	Command::cmd.markEndOfFunction();
       }
+      | END { Command::cmd.markEndOfFunction(); }
       ;
 
 loop:

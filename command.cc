@@ -21,6 +21,8 @@ void Command::addLiteral(char * arg)
 void Command::addReadInt(char * arg)
 { m_int_vars.push_back(std::string(arg)); m_execOrder.push_back(cmd_type::READ_INT); }
 
+void Command::addReadLine(char * arg)
+{ m_string_vars.push_back(std::string(arg)); m_execOrder.push_back(cmd_type::READ_LINE); }
 void Command::addToArgList(char * type, char * name)
 {
   std::string stype = std::string(type);
@@ -117,6 +119,9 @@ void Command::addToReturnList(char * arg)
 {
   m_current_returns.push_back(arg);
 }
+
+void Command::setFunctionName(char * arg)
+{ m_function_name = std::string(arg); }
 
 void Command::addToExpressionStack(char * arg)
 {

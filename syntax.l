@@ -32,6 +32,7 @@ void myunputc(int c) {
 "?" { return WHAAAT; }
 ":" { return COLON; }
 "int"  return INT;
+"line" return LINE;
 "char" return CHAR;
 "deref" return DEREF;
 "func" return FUNC;

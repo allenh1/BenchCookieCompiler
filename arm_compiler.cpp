@@ -82,7 +82,7 @@ void Command::evaluate_expression(std::ostream & file)
       continue;
     } else if (aExpType == PTRDEREF) {
       file<<"\tpop {%r1}"<<std::endl;
-      file<<"\tmov %r1, [%r1]"<<std::endl;
+      file<<"\tldr %r1, [%r1]"<<std::endl;
       file<<"\tpush {%r1}"<<std::endl;
       continue;
     }
@@ -278,6 +278,12 @@ void Command::doMain(std::ostream & file)
       file<<"\tbl scanf"<<std::endl;
       file<<std::endl;
 
+      ++stringdex;
+    } else if (m_execOrder[x] == cmd_type::READ_LINE) {
+      file<<"\tldr %r0, =IS"<<stringdex<<std::endl;
+      file<<"\tbl gets"<<std::endl;
+      file<<std::endl;
+      
       ++stringdex;
     } else if (m_execOrder[x] == cmd_type::DECL_INT) {
       file<<"\tmov %r0, $4"<<std::endl;
