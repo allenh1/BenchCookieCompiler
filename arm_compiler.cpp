@@ -299,12 +299,26 @@ void Command::doMain(std::ostream & file)
 	case DIV:
 	  /* @todo case divide by zero */
 	  file<<"\tmov %r0, $0"<<std::endl<<std::endl;
+	  file<<"\tcmp %r1, $0"<<std::endl;
+	  file<<"\tmov %r5, $1"<<std::endl;
+	  file<<"\tbge NLZ1"<<divcount<<std::endl;
+	  file<<"\tmov %r3, #-1"<<std::endl;
+	  file<<"\tmul %r5, %r5, %r3"<<std::endl;
+	  file<<"\tmul %r1, %r1, %r3"<<std::endl;
+	  file<<"NLZ1"<<divcount<<":"<<std::endl;
+	  file<<"\tcmp %r2, $0"<<std::endl;
+	  file<<"\tbge NLZ2"<<divcount<<std::endl;
+	  file<<"\tmov %r3, #-1"<<std::endl;
+	  file<<"\tmul %r5, %r3, %r5"<<std::endl;
+	  file<<"\tmul %r2, %r3, %r2"<<std::endl;
+	  file<<"NLZ2"<<divcount<<":"<<std::endl;
 	  file<<"DIVIDE"<<divcount++<<": cmp %r1, %r2"<<std::endl;
 	  file<<"\t bgt DONEDIVIDE"<<divcount-1<<std::endl;
 	  file<<"\t sub %r2, %r2, %r1"<<std::endl;
 	  file<<"\t add %r0, $1"<<std::endl;
 	  file<<"\t b DIVIDE"<<divcount-1<<std::endl;
 	  file<<"DONEDIVIDE"<<divcount-1<<":"<<std::endl;
+	  file<<"\tmul %r0, %r0, %r5"<<std::endl;
 	  goto do_default;
 	case GT:
 	  file<<"\tmov %r0, $1"<<std::endl;

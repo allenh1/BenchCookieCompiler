@@ -1,0 +1,57 @@
+print "Enter the first number:" ?
+int please? > num1
+print "Enter the operator:" ?
+string please? > operator
+print "Enter the second number:" ?
+int please? > num2
+
+int pluseq ? pluseq <-- operator = "+" ?
+int subteq ? subteq <-- operator = "-" ?
+int multeq ? multeq <-- operator = "*" ?
+int divdeq ? divdeq <-- operator = "/" ?
+
+int result ?
+
+if pluseq then
+  result <-- num1 + num2 ?
+endif
+
+if subteq then
+  result <-- num1 - num2 ?
+endif
+
+if multeq then
+  result <-- num1 * num2 ?
+endif
+
+int zerotest ?
+zerotest <-- ( num2 > 0 ) + ( num2 < 0 ) ?
+int iszero ? iszero <-- num2 = 0 ?
+divdeq <-- divdeq * zerotest ?
+int notdividing ?
+
+notdividing <-- pluseq + subteq + multeq ?
+
+if divdeq then
+  result <-- num1 / num2 ?
+  iszero <-- 0 ?
+endif
+
+if notdividing then
+  iszero <-- 0 ?
+endif
+
+if iszero then
+  print "Invalid input\n" ?
+endif
+
+int printit ?
+printit <-- notdividing + divdeq ?
+
+if printit then
+  print "Returned answer:" ?
+  print_int result ?
+  print "\n" ?
+endif
+
+done!
