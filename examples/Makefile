@@ -1,6 +1,6 @@
 all: adder hello_world name multiplier compare also
 
-also: mult_table strtest compute
+also: mult_table strtest compute strlen
 
 adder: adder.bc
 	../bcc adder.s < adder.bc > /dev/null
@@ -21,11 +21,14 @@ mult_table: mult_table.bc
 	../bcc mult_table.s < mult_table.bc > /dev/null
 
 strtest: strtest.bc
-	../bcc strtest.s < strtest.bc > /dev/null
+	../bcc strtest.s < strtest.bc &> /dev/null
 
 compute: compute.bc
 	../bcc compute.s < compute.bc > /dev/null
 
+strlen: strlen.bc
+	../bcc strlen.s < strlen.bc > /dev/null
+
 clean:
-	rm -f *.s adder hello_world name multiplier compare mult_table
-	rm -f strtest compute *~
+	rm -f *.s *~ adder hello_world name multiplier compare
+	rm -f strtest compute strlen mult_table

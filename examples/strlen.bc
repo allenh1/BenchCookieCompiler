@@ -1,0 +1,16 @@
+line please? > str
+int ptr_test ? ptr_test <-- str ?
+int len ? len <-- 0 ?
+int test ?
+
+test <-- deref ptr_test ?
+
+for test do
+  test <-- deref ptr_test ?
+  ptr_test <-- ptr_test + 1 ?
+  if test ? then len <-- len + 1 ? endif
+endfor
+
+print_int len ?
+print "\n" ?
+done!  
