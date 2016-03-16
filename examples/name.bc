@@ -1,3 +1,13 @@
+@;
+ ; name.bc
+ ;
+ ; This is an example of Bench Cookie's
+ ; ability to read strings. The user
+ ; is prompted for their first and
+ ; last names. Then we print out their
+ ; first and last names.
+ ;@
+
 print "Enter your first name: " ?
 string please? > first
 print "Enter your last name: " ?

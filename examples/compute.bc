@@ -5,12 +5,15 @@ string please? > operator
 print "Enter the second number:" ?
 int please? > num2
 
+; We do these because we want to be sure
+; that they are doing division later.
+
 int pluseq ? pluseq <-- operator = "+" ?
 int subteq ? subteq <-- operator = "-" ?
 int multeq ? multeq <-- operator = "*" ?
 int divdeq ? divdeq <-- operator = "/" ?
 
-int result ?
+int result ? @ This is where we will store the answer
 
 if pluseq ? then
   result <-- num1 + num2 ?

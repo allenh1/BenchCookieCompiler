@@ -12,8 +12,20 @@ void myunputc(int c) {
 
 %}
 
+%x BLK_COMMENT
+%x LINE_COMMENT
 %%
 [\t \n] { /** discard spaces and tabs! **/ }
+
+<INITIAL>"@;" BEGIN(BLK_COMMENT);
+<BLK_COMMENT>";@" BEGIN(INITIAL);
+<BLK_COMMENT>[.\n]+  { /** discard anything in a comment block **/ }
+
+<INITIAL>"@" BEGIN(LINE_COMMENT);
+<INITIAL>";" BEGIN(LINE_COMMENT);
+<LINE_COMMENT>[\n] BEGIN(INITIAL);
+<LINE_COMMENT>[.]+ { /** disregard anything in a line comment **/ }
+
 "print_string" return PRINT_STRING;
 "print_int" return PRINT_INT;
 "print" { return PRINT_THIS; }
