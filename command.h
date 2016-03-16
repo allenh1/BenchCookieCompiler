@@ -103,7 +103,7 @@ public:
 
   void writeAssembly();
 
-  void startIfBlock(char * arg);
+  void startIfBlock();
   void endIfBlock();
 
   const bool & isCCallable(){ return m_is_c_callable; }
@@ -126,6 +126,8 @@ private:
   void push_variable(std::string var_name, std::stack<unsigned short> & vartypes, std::ostream & file);
   void doData(std::ostream & file);
   void doMain(std::ostream & file);
+
+  void evaluate_expression(std::ostream & file);
 
   var_type getVarType(std::string varname);
   std::string m_filename;

@@ -28,4 +28,4 @@ compute: compute.bc
 
 clean:
 	rm -f *.s adder hello_world name multiplier compare mult_table
-	rm -f strtest compute
+	rm -f strtest compute *~

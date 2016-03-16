@@ -12,15 +12,15 @@ int divdeq ? divdeq <-- operator = "/" ?
 
 int result ?
 
-if pluseq then
+if pluseq ? then
   result <-- num1 + num2 ?
 endif
 
-if subteq then
+if subteq ? then
   result <-- num1 - num2 ?
 endif
 
-if multeq then
+if multeq ? then
   result <-- num1 * num2 ?
 endif
 
@@ -32,23 +32,23 @@ int notdividing ?
 
 notdividing <-- pluseq + subteq + multeq ?
 
-if divdeq then
+if divdeq ? then
   result <-- num1 / num2 ?
   iszero <-- 0 ?
 endif
 
-if notdividing then
+if notdividing ? then
   iszero <-- 0 ?
 endif
 
-if iszero then
+if iszero ? then
   print "Invalid input\n" ?
 endif
 
 int printit ?
 printit <-- notdividing + divdeq ?
 
-if printit then
+if printit ? then
   print "Returned answer:" ?
   print_int result ?
   print "\n" ?

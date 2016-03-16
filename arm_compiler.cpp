@@ -36,10 +36,184 @@ void Command::doData(std::ostream & file)
   file<<std::endl<<"string_fmt:\t.ascii \"%s\\0\""<<std::endl;
   file<<"num_fmt:\t.ascii \"%d\\0\""<<std::endl;
   file<<"TRUE_STORY:\t.ascii \"true\\0\""<<std::endl;
-  file<<"FALSE:\t.ascii \"false\\0\""<<std::endl;
+  file<<"FALSE:\t\t.ascii \"false\\0\""<<std::endl;
 }
 #define INTGR 67
 #define STRNG 68
+
+void Command::evaluate_expression(std::ostream & file)
+{
+  static ssize_t nszcount = 0;
+  static ssize_t divcount = 0;
+  static ssize_t exprdex  = 0;
+  
+  unsigned int t1, t2;
+
+  /** Begin Stack Evaluation **/
+  std::stack<math_expression> * expr = m_evaluations[exprdex++];
+  std::stack<unsigned short> arg_types;
+  ssize_t stack_depth = 0;
+
+  std::stack<math_expression> eval;// = *expr;
+  for(; !expr->empty(); eval.push(expr->top()), expr->pop(), 1);
+  std::stack<math_expression> curr;
+ 
+  for (; eval.size();) {
+    math_expression a = eval.top(); eval.pop();
+    Command::exp_type type = static_cast<Command::exp_type>(a.expr_type);
+    exp_type aExpType = static_cast<Command::exp_type>(a.expr_type);
+    if (aExpType == VAR)  {
+      push_variable(a.pirate_name, arg_types, file);
+      stack_depth += 4;
+      continue;
+    } else if (aExpType == AN_INT) {
+      file<<"\tmov %r1, $"<<a.int_arg<<std::endl;
+      file<<"\tpush {%r1}"<<std::endl;
+      stack_depth += 4;
+      arg_types.push(INTGR);
+      continue;
+    } else if (aExpType == LITERAL) {
+      arg_types.push(STRNG);
+      ssize_t idx = m_exp_literals.front();
+      m_exp_literals.pop();
+      file<<"\tldr %r1, =S"<<idx<<std::endl;
+      file<<"\tpush {%r1}"<<std::endl;
+      stack_depth += 4;
+      continue;
+    } else if (aExpType == PTRDEREF) {
+      file<<"\tpop {%r1}"<<std::endl;
+      file<<"\tmov %r1, [%r1]"<<std::endl;
+      file<<"\tpush {%r1}"<<std::endl;
+      continue;
+    }
+    
+    if (stack_depth >= 8) {
+      file<<"\tpop {%r1, %r2}"<<std::endl;
+      stack_depth -= 8;
+    } else continue;
+    switch (type) {
+    case ADD:
+      /**
+       * Oh, how I want to use a comma expression...
+       * You know, the stack_push((b=stack_pop(),a=stack_pop(),a+b))
+       * kind of comma expresion.
+       */
+      file<<"\tadd %r0, %r1, %r2"<<std::endl;
+      goto do_default;
+    case SUB:
+      file<<"\tsub %r0, %r2, %r1"<<std::endl;
+      goto do_default;
+    case MUL:
+      file<<"\tmul %r0, %r1, %r2"<<std::endl;
+      goto do_default;
+    case DIV:
+      /* @todo case divide by zero */
+      file<<"\tmov %r0, $0"<<std::endl<<std::endl;
+      file<<"\tcmp %r1, $0"<<std::endl;
+      file<<"\tmov %r5, $1"<<std::endl;
+      file<<"\tbge NLZ1"<<divcount<<std::endl;
+      file<<"\tmov %r3, #-1"<<std::endl;
+      file<<"\tmul %r5, %r5, %r3"<<std::endl;
+      file<<"\tmul %r1, %r1, %r3"<<std::endl;
+      file<<"NLZ1"<<divcount<<":"<<std::endl;
+      file<<"\tcmp %r2, $0"<<std::endl;
+      file<<"\tbge NLZ2"<<divcount<<std::endl;
+      file<<"\tmov %r3, #-1"<<std::endl;
+      file<<"\tmul %r5, %r3, %r5"<<std::endl;
+      file<<"\tmul %r2, %r3, %r2"<<std::endl;
+      file<<"NLZ2"<<divcount<<":"<<std::endl;
+      file<<"DIVIDE"<<divcount++<<": cmp %r1, %r2"<<std::endl;
+      file<<"\t bgt DONEDIVIDE"<<divcount-1<<std::endl;
+      file<<"\t sub %r2, %r2, %r1"<<std::endl;
+      file<<"\t add %r0, $1"<<std::endl;
+      file<<"\t b DIVIDE"<<divcount-1<<std::endl;
+      file<<"DONEDIVIDE"<<divcount-1<<":"<<std::endl;
+      file<<"\tmul %r0, %r0, %r5"<<std::endl;
+      goto do_default;
+    case GT:
+      file<<"\tmov %r0, $1"<<std::endl;
+      file<<"\tcmp %r2, %r1"<<"\t@ Backwards because stack"<<std::endl;
+      file<<std::endl;
+      file<<"\tbgt NOSETZERO"<<nszcount<<std::endl;
+      file<<"\tmov %r0, $0"<<std::endl;
+      file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+      nszcount++;
+      goto do_default;
+    case GEQ:
+      file<<"\tmov %r0, $1"<<std::endl;
+      file<<"\tcmp %r2, %r1"<<std::endl;
+      file<<"\tbge NOSETZERO"<<nszcount<<std::endl;
+      file<<"\tmov %r0, $0"<<std::endl;
+      file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+      nszcount++;
+      goto do_default;
+    case LT:
+      t1 = arg_types.top(); arg_types.pop();
+      t2 = arg_types.top(); arg_types.pop();
+      if (t1 == STRNG && t2 == STRNG) {
+	file<<"\tmov %r0, %r1"<<std::endl;
+	file<<"\tmov %r1, %r2"<<std::endl;
+	file<<"\tbl strcmp"<<std::endl;
+	file<<"\tpush {%r0}"<<std::endl;
+	file<<"\tmov %r0, $1"<<std::endl;
+	file<<"\tpop {%r1}"<<std::endl;
+	file<<"\tmov %r2, #-1"<<std::endl;
+	file<<"\tcmp %r2, %r1"<<std::endl;
+	file<<"\tbeq NOSETZERO"<<nszcount<<std::endl;
+	file<<"\tmov %r0, $0"<<std::endl;
+	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+      } else {
+	file<<"\tmov %r0, $1"<<std::endl;
+	file<<"\tcmp %r2, %r1"<<std::endl;
+	file<<"\tblt NOSETZERO"<<nszcount<<std::endl;
+	file<<"\tmov %r0, $0"<<std::endl;
+	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+      }
+      nszcount++;
+      goto do_default;
+    case LEQ:
+      file<<"\tmov %r0, $1"<<std::endl;
+      file<<"\tcmp %r2, %r1"<<std::endl;
+      file<<"\tble NOSETZERO"<<nszcount<<std::endl;
+      file<<"\tmov %r0, $0"<<std::endl;
+      file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+      nszcount++;
+      goto do_default;
+    case EQ:
+      t1 = arg_types.top(); arg_types.pop();
+      t2 = STRNG;// arg_types.top(); arg_types.pop();
+      if (t1 == STRNG && t2 == STRNG) {
+	file<<"\tmov %r0, %r1"<<std::endl;
+	file<<"\tmov %r1, %r2"<<std::endl;
+	file<<"\tbl strcmp"<<std::endl;
+	file<<"\tpush {%r0}"<<std::endl;
+	file<<"\tmov %r0, $1"<<std::endl;
+	file<<"\tpop {%r1}"<<std::endl;
+	file<<"\tmov %r2, $0"<<std::endl;
+	file<<"\tcmp %r2, %r1"<<std::endl;
+	file<<"\tbeq NOSETZERO"<<nszcount<<std::endl;
+	file<<"\tmov %r0, $0"<<std::endl;
+	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+      } else {
+	file<<"\tmov %r0, $1"<<std::endl;
+	file<<"\tcmp %r2, %r1"<<std::endl;
+	file<<"\tble NOSETZERO"<<nszcount<<std::endl;
+	file<<"\tmov %r0, $0"<<std::endl;
+	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+      }
+      nszcount++;
+      goto do_default;
+    default:
+      std::cerr<<"Welp. You did it. You tried it."<<std::endl;
+      std::cerr<<"This is what happens. You get mad."<<std::endl;
+      std::cerr<<"Don't use things I didn't implement yet."<<std::endl;
+      exit(101);
+    do_default:
+      file<<"\tpush {%r0}"<<std::endl;
+      stack_depth += 4;
+    }
+  }
+}
 
 void Command::push_variable(std::string var_name, std::stack<unsigned short> & vartype,
 			    std::ostream & file)
@@ -77,11 +251,12 @@ void Command::push_variable(std::string var_name, std::stack<unsigned short> & v
 
   std::cerr<<"Error: could not resolve variable \"";
   std::cerr<<varname<<"\"."<<std::endl;
+  exit(6);
 }
 
 void Command::doMain(std::ostream & file)
 {
-  int y; size_t divcount = 0, nszcount = 0;
+  int y;
   const size_t local_count = 0;// Idk, yo. Just... somewhere.
   if (m_is_c_callable) file<<m_function_name<<":"<<std::endl;
   else file<<"main:"<<std::endl;
@@ -94,7 +269,7 @@ void Command::doMain(std::ostream & file)
 
   for (int x = 0, intassdex = 0, stringdex = 0, exprdex = 0,
 	 intdex = 0, pintdex = 0, pstringdex = 0, litdex = 0,
-	 pbooldex = 0, sints = 0, ifndex = 0, forndex = 0;
+	 pbooldex = 0, sints = 0, ifndex = 0, forndex = 0, nszcount = 0;
       x < m_execOrder.size(); ++x) {
 
     if (m_execOrder[x] == cmd_type::READ_STRING) {
@@ -113,24 +288,8 @@ void Command::doMain(std::ostream & file)
       m_int_vars.push_back(m_int_declarations[sints++]);
     } else if (m_execOrder[x] == cmd_type::BEGIN_IF) {
       // find the variable we depend on!
-      std::string var_name = m_if_deps[ifndex];
-      for (y = 0; y < m_int_vars.size(); ++y) {
-	if (m_int_vars[y] == var_name) break;
-      } int z = 0;
-      for (z = 0; z < m_int_declarations.size(); ++z) {
-	if (m_int_declarations[z] == var_name) break;
-      } if (z < m_int_declarations.size()) {
-	file<<"\tmov %r1, %r9"<<std::endl;
-	file<<"\tldr %r1, [%r1, #"<<4*z<<"]"<<std::endl;
-	file<<"\tldr %r0, [%r1]"<<std::endl;
-      } else if (y < m_int_vars.size())  {
-	file<<"\tldr %r0, =I"<<y<<std::endl;
-	file<<"\tldr %r0, [%r0]"<<std::endl;
-      } else {
-	std::cerr<<"Error: if-dependent variable "<<var_name;
-	std::cerr<<" not yet declared!"<<std::endl;
-	exit(6);
-      }
+      evaluate_expression(file);
+      file<<"\tpop {%r0}"<<std::endl;
       file<<"IF"<<ifndex<<":\tcmp %r0, $0"<<std::endl;
       file<<"\tbeq END_IF"<<ifndex<<std::endl;
       ++ifndex;
@@ -238,174 +397,10 @@ void Command::doMain(std::ostream & file)
 	exit(3);
       } *last_z = z;
 
-      /** Begin Stack Evaluation **/
-      std::stack<math_expression> * expr = m_evaluations[exprdex++];
-      std::stack<unsigned short> arg_types;
-      ssize_t stack_depth = 0;
-
-      std::stack<math_expression> eval;// = *expr;
-      for(; !expr->empty(); eval.push(expr->top()), expr->pop(), 1);
-      std::stack<math_expression> curr;
-      unsigned short t1, t2;
-
-      for (; eval.size();) {
-        math_expression a = eval.top(); eval.pop();
-	Command::exp_type type = static_cast<Command::exp_type>(a.expr_type);
-	exp_type aExpType = static_cast<Command::exp_type>(a.expr_type);
-        if (aExpType == VAR)  {
-          push_variable(a.pirate_name, arg_types, file);
-	  stack_depth += 4;
-	  continue;
-        } else if (aExpType == AN_INT) {
-          file<<"\tmov %r1, $"<<a.int_arg<<std::endl;
-	  file<<"\tpush {%r1}"<<std::endl;
-	  stack_depth += 4;
-	  arg_types.push(INTGR);
-	  continue;
-        } else if (aExpType == LITERAL) {
-	  arg_types.push(STRNG);
-	  ssize_t idx = m_exp_literals.front();
-	  m_exp_literals.pop();
-	  file<<"\tldr %r1, =S"<<idx<<std::endl;
-	  file<<"\tpush {%r1}"<<std::endl;
-	  stack_depth += 4;
-	  continue;
-	} else if (aExpType == PTRDEREF) {
-	  file<<"\tpop {%r1}"<<std::endl;
-	  file<<"\tmov %r1, [%r1]"<<std::endl;
-	  file<<"\tpush {%r1}"<<std::endl;
-	  continue;
-	}
-
-	if (stack_depth >= 8) {
-     	  file<<"\tpop {%r1, %r2}"<<std::endl;
-	  stack_depth -= 8;
-	} else continue;
-        switch (type) {
-	case ADD:
-	  /**
-	   * Oh, how I want to use a comma expression...
-	   * You know, the stack_push((b=stack_pop(),a=stack_pop(),a+b))
-	   * kind of comma expresion.
-	   */
-	  file<<"\tadd %r0, %r1, %r2"<<std::endl;
-	  goto do_default;
-	case SUB:
-	  file<<"\tsub %r0, %r2, %r1"<<std::endl;
-	  goto do_default;
-	case MUL:
-	  file<<"\tmul %r0, %r1, %r2"<<std::endl;
-	  goto do_default;
-	case DIV:
-	  /* @todo case divide by zero */
-	  file<<"\tmov %r0, $0"<<std::endl<<std::endl;
-	  file<<"\tcmp %r1, $0"<<std::endl;
-	  file<<"\tmov %r5, $1"<<std::endl;
-	  file<<"\tbge NLZ1"<<divcount<<std::endl;
-	  file<<"\tmov %r3, #-1"<<std::endl;
-	  file<<"\tmul %r5, %r5, %r3"<<std::endl;
-	  file<<"\tmul %r1, %r1, %r3"<<std::endl;
-	  file<<"NLZ1"<<divcount<<":"<<std::endl;
-	  file<<"\tcmp %r2, $0"<<std::endl;
-	  file<<"\tbge NLZ2"<<divcount<<std::endl;
-	  file<<"\tmov %r3, #-1"<<std::endl;
-	  file<<"\tmul %r5, %r3, %r5"<<std::endl;
-	  file<<"\tmul %r2, %r3, %r2"<<std::endl;
-	  file<<"NLZ2"<<divcount<<":"<<std::endl;
-	  file<<"DIVIDE"<<divcount++<<": cmp %r1, %r2"<<std::endl;
-	  file<<"\t bgt DONEDIVIDE"<<divcount-1<<std::endl;
-	  file<<"\t sub %r2, %r2, %r1"<<std::endl;
-	  file<<"\t add %r0, $1"<<std::endl;
-	  file<<"\t b DIVIDE"<<divcount-1<<std::endl;
-	  file<<"DONEDIVIDE"<<divcount-1<<":"<<std::endl;
-	  file<<"\tmul %r0, %r0, %r5"<<std::endl;
-	  goto do_default;
-	case GT:
-	  file<<"\tmov %r0, $1"<<std::endl;
-	  file<<"\tcmp %r2, %r1"<<"\t@ Backwards because stack"<<std::endl;
-	  file<<std::endl;
-	  file<<"\tbgt NOSETZERO"<<nszcount<<std::endl;
-	  file<<"\tmov %r0, $0"<<std::endl;
-	  file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
-	  nszcount++;
-	  goto do_default;
-	case GEQ:
-	  file<<"\tmov %r0, $1"<<std::endl;
-	  file<<"\tcmp %r2, %r1"<<std::endl;
-	  file<<"\tbge NOSETZERO"<<nszcount<<std::endl;
-	  file<<"\tmov %r0, $0"<<std::endl;
-	  file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
-	  nszcount++;
-	  goto do_default;
-	case LT:
-	  t1 = arg_types.top(); arg_types.pop();
-	  t2 = arg_types.top(); arg_types.pop();
-	  if (t1 == STRNG && t2 == STRNG) {
-	    file<<"\tmov %r0, %r1"<<std::endl;
-	    file<<"\tmov %r1, %r2"<<std::endl;
-	    file<<"\tbl strcmp"<<std::endl;
-	    file<<"\tpush {%r0}"<<std::endl;
-	    file<<"\tmov %r0, $1"<<std::endl;
-	    file<<"\tpop {%r1}"<<std::endl;
-	    file<<"\tmov %r2, #-1"<<std::endl;
-	    file<<"\tcmp %r2, %r1"<<std::endl;
-	    file<<"\tbeq NOSETZERO"<<nszcount<<std::endl;
-	    file<<"\tmov %r0, $0"<<std::endl;
-	    file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
-	  } else {
-	    file<<"\tmov %r0, $1"<<std::endl;
-	    file<<"\tcmp %r2, %r1"<<std::endl;
-	    file<<"\tblt NOSETZERO"<<nszcount<<std::endl;
-	    file<<"\tmov %r0, $0"<<std::endl;
-	    file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
-	  }
-	  nszcount++;
-	  goto do_default;
-	case LEQ:
-	  file<<"\tmov %r0, $1"<<std::endl;
-	  file<<"\tcmp %r2, %r1"<<std::endl;
-	  file<<"\tble NOSETZERO"<<nszcount<<std::endl;
-	  file<<"\tmov %r0, $0"<<std::endl;
-	  file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
-	  nszcount++;
-	  goto do_default;
-	case EQ:
-	  t1 = arg_types.top(); arg_types.pop();
-	  t2 = STRNG;// arg_types.top(); arg_types.pop();
-	  if (t1 == STRNG && t2 == STRNG) {
-	    file<<"\tmov %r0, %r1"<<std::endl;
-	    file<<"\tmov %r1, %r2"<<std::endl;
-	    file<<"\tbl strcmp"<<std::endl;
-	    file<<"\tpush {%r0}"<<std::endl;
-	    file<<"\tmov %r0, $1"<<std::endl;
-	    file<<"\tpop {%r1}"<<std::endl;
-	    file<<"\tmov %r2, $0"<<std::endl;
-	    file<<"\tcmp %r2, %r1"<<std::endl;
-	    file<<"\tbeq NOSETZERO"<<nszcount<<std::endl;
-	    file<<"\tmov %r0, $0"<<std::endl;
-	    file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
-	  } else {
-	    file<<"\tmov %r0, $1"<<std::endl;
-	    file<<"\tcmp %r2, %r1"<<std::endl;
-	    file<<"\tble NOSETZERO"<<nszcount<<std::endl;
-	    file<<"\tmov %r0, $0"<<std::endl;
-	    file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
-	  }
-	  nszcount++;
-	  goto do_default;
-          default:
-	    std::cerr<<"Welp. You did it. You tried it."<<std::endl;
-	    std::cerr<<"This is what happens. You get mad."<<std::endl;
-	    std::cerr<<"Don't use things I didn't implement yet."<<std::endl;
-	    exit(101);
-          do_default:
-      	    file<<"\tpush {%r0}"<<std::endl;
-	    stack_depth += 4;
-        }
-      }
+      evaluate_expression(file);
 
       file<<"\tpop {%r0}"<<std::endl;
-      stack_depth -= 4;
+   
       if (!on_stack) {
         int x;
        for (x = 0; x < m_int_vars.size(); ++x) {
@@ -418,8 +413,6 @@ void Command::doMain(std::ostream & file)
 	     delete last_z;
       }
       file<<"\tstr %r0, [%r3]"<<std::endl;
-      if (stack_depth) file<<"\tadd %sp, $"<<stack_depth<<"\t@ Destroy stack"<<std::endl;
-      else file<<"\t@ Yayy! Stack has nothing left."<<std::endl<<"\t@ You should be happy. I am."<<std::endl;
       file<<std::endl; intassdex++;
     }
   }
@@ -434,7 +427,7 @@ void Command::writeAssembly()
     exit(2);
   }
   file <<"/**"<<std::endl;
-  file <<" *"<<m_filename<<std::endl;
+  file <<" * "<<m_filename<<std::endl;
   file <<" *"<<std::endl;
   file <<" * Generated by Bench Cookie Compiler!"<<std::endl;
   file <<" * Bench Cookie is... Experimental. Don't be mad."<<std::endl;

@@ -106,14 +106,14 @@ assignment:
     ;
 
 if_else_block:
-    IF WORD THEN { Command::cmd.startIfBlock($2); }
+    IF expr THEN { Command::cmd.startIfBlock(); }
 //    | ELIF WORD THEN { Command::cmd.startElIfBlock($2); }
     | ENDIF { Command::cmd.endIfBlock(); }
     ;
 
 expr:
-    exp WHAAAT { Command::cmd.markEndOfExpression(); }
-    | exp expr
+    exp expr
+    | exp WHAAAT { Command::cmd.markEndOfExpression(); }
     ;
 
 exp:

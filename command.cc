@@ -96,10 +96,9 @@ void Command::startFunctionBody(char * arg)
 
 }
 
-void Command::startIfBlock(char * arg)
+void Command::startIfBlock()
 {
   m_execOrder.push_back(cmd_type::BEGIN_IF);
-  m_if_deps.push_back(std::string(arg));
 }
 
 void Command::endIfBlock() { m_execOrder.push_back(cmd_type::END_IF); }
