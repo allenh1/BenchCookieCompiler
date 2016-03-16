@@ -8,6 +8,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <queue>
 #include <stack>
 // For the forks
 #include <unistd.h>
@@ -58,18 +59,20 @@ public:
 
   enum cmd_type { READ_STRING, READ_INT, PRINT, PRINT_STR, PRINT_NUM, INTGETS,
 		  EXPR, DECL_INT, DECL_DOUBLE, DECL_STRING, DECL_BOOL, STRINGGETS,
-		  PRINT_BOOL, BEGIN_IF, END_IF, BEGIN_FOR, END_FOR, PTRGETS, ENDFUNC };
+		  PRINT_BOOL, BEGIN_IF, END_IF, BEGIN_FOR, END_FOR, PTRGETS, ENDFUNC,
+                  NOPRINT };
  
   enum exp_type { ADD, SUB, MUL, DIV, MOD, AN_INT, VAR, ASIGN, RESULT, LOGOR,
 		  LOGXOR, LOGAND, BITOR, BITXOR, NEQ, BITAND, EQ, GT, GEQ, LT,
-		  LEQ, SHIFTR, SHIFTL, LOGNOT, COMP, UPLUS, UMINUS, PTRDEREF };
+		  LEQ, SHIFTR, SHIFTL, LOGNOT, COMP, UPLUS, UMINUS, PTRDEREF, LITERAL };
 
-  enum var_type { HINT, HDOUBLE, HFLOAT, HBOOL, HSTRING, HCHAR };
-  
+  enum var_type { HINT, DINT, HDOUBLE, HFLOAT, HBOOL, LSTRING, DSTRING, HCHAR, DCHAR };
+
   void addPrintInt(char * arg);
   void addPrintString(char * arg);
   void addPrintLiteral(char * arg);
   void addToArgList(char *, char *);
+  void addLiteral(char * arg);
   void addToReturnList(char *);
   
   void addReadInt(char * arg);
@@ -120,9 +123,11 @@ public:
   
 private:
   void doBSS(std::ostream & file);
+  void push_variable(std::string var_name, std::stack<unsigned short> & vartypes, std::ostream & file);
   void doData(std::ostream & file);
   void doMain(std::ostream & file);
 
+  var_type getVarType(std::string varname);
   std::string m_filename;
 
   std::vector<std::string> m_string_vars;
@@ -134,6 +139,7 @@ private:
   std::string m_function_name;
 
   std::vector<std::string> m_print_strings;
+  std::queue<ssize_t> m_exp_literals;
   std::vector<std::string> m_print_ints;
   std::vector<std::string> m_print_bools;
   std::vector<std::string> m_lines;

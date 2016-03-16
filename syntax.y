@@ -118,6 +118,10 @@ expr:
 
 exp:
     WORD { Command::cmd.addToExpressionStack($1); }
+    | STRING_LITERALLY {
+      Command::cmd.addLiteral($1);
+      Command::cmd.addToExpressionStack(strdup("literal"));
+    }
     | exp LOR exp { Command::cmd.addToExpressionStack(strdup("||")); }
     | exp LXOR exp { Command::cmd.addToExpressionStack(strdup("^^")); }
     | exp LAND exp { Command::cmd.addToExpressionStack(strdup("&&")); }

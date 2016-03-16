@@ -38,6 +38,42 @@ void Command::doData(std::ostream & file)
   file<<"TRUE_STORY:\t.ascii \"true\\0\""<<std::endl;
   file<<"FALSE:\t.ascii \"false\\0\""<<std::endl;
 }
+#define INTGR 67
+#define STRNG 68
+
+void Command::push_variable(std::string var_name, std::stack<unsigned short> & vartype, std::ostream & file)
+{
+  std::string varname = var_name;
+  for (int x = 0; x < m_int_declarations.size(); ++x) {
+    if (m_int_declarations[x] == varname) {
+      file<<"\tmov %r1, %r9"<<std::endl;
+      file<<"\tldr %r1, [%r9, #"<<4 * x<<"]"<<std::endl;
+      file<<"\tldr %r1, [%r1]"<<std::endl;
+      file<<"\tpush {%r1}"<<std::endl;
+      vartype.push(INTGR);
+      return;
+    }
+  }
+    
+  for (int x = 0; x < m_int_vars.size(); ++x) {
+    if (m_int_vars[x] == varname) {
+      file<<"\tldr %r1, =I"<<x<<std::endl;
+      file<<"\tldr %r1, [%r1]"<<std::endl;
+      file<<"\tpush {%r1}"<<std::endl;
+      vartype.push(INTGR);
+      return;
+    }
+  }
+  
+  for (int x = 0; x < m_string_vars.size(); ++x) {
+    if (m_int_vars[x] == varname) {
+      file<<"\tldr %r1, =IS"<<x<<std::endl;
+      file<<"\tpush {%r1}"<<std::endl;
+      vartype.push(STRNG);
+      return;
+    }
+  }
+}
 
 void Command::doMain(std::ostream & file)
 {
@@ -130,6 +166,8 @@ void Command::doMain(std::ostream & file)
       file<<std::endl;
 
       ++intdex;
+    } else if (m_execOrder[x] == cmd_type::NOPRINT) {
+      ++litdex;
     } else if (m_execOrder[x] == cmd_type::PRINT) {
       file<<"\tldr %r0, =S"<<litdex++<<std::endl;
       file<<"\tbl printf"<<std::endl<<std::endl;
@@ -198,7 +236,7 @@ void Command::doMain(std::ostream & file)
 
       /** Begin Stack Evaluation **/
       std::stack<math_expression> * expr = m_evaluations[exprdex++];
-
+      std::stack<unsigned short> arg_types;
       ssize_t stack_depth = 0;
 
       std::stack<math_expression> eval;// = *expr;
@@ -209,32 +247,29 @@ void Command::doMain(std::ostream & file)
         math_expression a = eval.top(); eval.pop();
 	Command::exp_type type = static_cast<Command::exp_type>(a.expr_type);
 	exp_type aExpType = static_cast<Command::exp_type>(a.expr_type);
-
+	unsigned short t1, t2;
         if (aExpType == VAR)  {
-          for (y = 0; y < m_int_vars.size(); ++y) {
-            if (m_int_vars[y] == a.pirate_name) break;
-	  } if (y == m_int_vars.size()) {
-            std::cerr<<"Error: variable "<<a.pirate_name<<" was not declared!"<<std::endl;
-            exit(3);
-          } int z;
-	  for (z = 0; z < m_int_declarations.size(); ++z) {
-	    if (m_int_declarations[z] == m_int_vars[y]) break;
-	  } if (z != m_int_declarations.size()) {
-	    file<<"\tmov %r1, %r9"<<std::endl;
-	    file<<"\tldr %r1, [%r9, #"<<4 * z<<"]"<<std::endl;
-	    file<<"\tldr %r1, [%r1]"<<std::endl;
-	  } else {
-	    file<<"\tldr %r1, =I"<<y<<std::endl;
-	    file<<"\tldr %r1, [%r1]"<<std::endl;
-	  }
-	  file<<"\tpush {%r1}"<<std::endl;
-	  stack_depth += 4; continue;
+          push_variable(a.pirate_name, arg_types, file);
         } else if (aExpType == AN_INT) {
           file<<"\tmov %r1, $"<<a.int_arg<<std::endl;
 	  file<<"\tpush {%r1}"<<std::endl;
 	  stack_depth += 4;
+	  arg_types.push(INTGR);
 	  continue;
-        } else if (stack_depth >= 8) {
+        } if (aExpType == LITERAL) {
+	  arg_types.push(STRNG);
+	  ssize_t idx = m_exp_literals.front();
+	  m_exp_literals.pop();
+	  file<<"\tldr %r1, =S"<<idx<<std::endl;
+	  file<<"\tpush {%r1}"<<std::endl;
+	  stack_depth += 4;
+	  continue;
+	} else if (aExpType == PTRDEREF) {
+	  file<<"\tpop {%r1}"<<std::endl;
+	  file<<"\tmov %r1, [%r1]"<<std::endl;
+	  file<<"\tpush {%r1}"<<std::endl;
+	  continue;
+	} else if (stack_depth >= 8) {
      	  file<<"\tpop {%r1, %r2}"<<std::endl;
 	  stack_depth -= 8;
 	} else continue;
@@ -281,11 +316,27 @@ void Command::doMain(std::ostream & file)
 	  nszcount++;
 	  goto do_default;
 	case LT:
-	  file<<"\tmov %r0, $1"<<std::endl;
-	  file<<"\tcmp %r2, %r1"<<std::endl;
-	  file<<"\tblt NOSETZERO"<<nszcount<<std::endl;
-	  file<<"\tmov %r0, $0"<<std::endl;
-	  file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+	  t1 = arg_types.top(); arg_types.pop();
+	  t2 = arg_types.top(); arg_types.pop();
+	  if (t1 == STRNG && t2 == STRNG) {
+	    file<<"\tmov %r0, %r1"<<std::endl;
+	    file<<"\tmov %r1, %r2"<<std::endl;
+	    file<<"\tbl strcmp"<<std::endl;
+	    file<<"\tpush {%r0}"<<std::endl;
+	    file<<"\tmov %r0, $1"<<std::endl;
+	    file<<"\tpop {%r1}"<<std::endl;
+	    file<<"\tmov %r2, #-1"<<std::endl;
+	    file<<"\tcmp %r2, %r1"<<std::endl;
+	    file<<"\tbeq NOSETZERO"<<nszcount<<std::endl;
+	    file<<"\tmov %r0, $0"<<std::endl;
+	    file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+	  } else {
+	    file<<"\tmov %r0, $1"<<std::endl;
+	    file<<"\tcmp %r2, %r1"<<std::endl;
+	    file<<"\tblt NOSETZERO"<<nszcount<<std::endl;
+	    file<<"\tmov %r0, $0"<<std::endl;
+	    file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+	  }
 	  nszcount++;
 	  goto do_default;
 	case LEQ:
@@ -297,6 +348,24 @@ void Command::doMain(std::ostream & file)
 	  nszcount++;
 	  goto do_default;
 	case EQ:
+	  t1 = arg_types.top(); arg_types.pop();
+	  t2 = arg_types.top(); arg_types.pop();
+	  if (t1 == STRNG && t2 == STRNG) {
+	    file<<"\tmov %r0, %r1"<<std::endl;
+	    file<<"\tmov %r1, %r2"<<std::endl;
+	    file<<"\tbl strcmp"<<std::endl;
+	    file<<"\tpush {%r0}"<<std::endl;
+	    file<<"\tmov %r0, $1"<<std::endl;
+	    file<<"\tpop {%r1}"<<std::endl;
+	    file<<"\tmov %r2, $0"<<std::endl;
+	    file<<"\tcmp %r2, %r1"<<std::endl;
+	    file<<"\tbeq NOSETZERO"<<nszcount<<std::endl;
+	    file<<"\tmov %r0, $0"<<std::endl;
+	    file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+	    nszcount++;
+	    goto do_default;
+	  }
+
 	  file<<"\tmov %r0, $1"<<std::endl;
 	  file<<"\tcmp %r2, %r1"<<std::endl;
 	  file<<"\tble NOSETZERO"<<nszcount<<std::endl;
@@ -304,23 +373,17 @@ void Command::doMain(std::ostream & file)
 	  file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
 	  nszcount++;
 	  goto do_default;
-	case PTRDEREF:
-	  goto do_default;
           default:
 	    std::cerr<<"Welp. You did it. You tried it."<<std::endl;
 	    std::cerr<<"This is what happens. You get mad."<<std::endl;
 	    std::cerr<<"Don't use things I didn't implement yet."<<std::endl;
 	    exit(101);
           do_default:
-            // file<<"\tstr %r0, [%sp, #-4]"<<std::endl;
-	    // file<<"\tsub %sp, %sp, $4"<<std::endl;
-	    file<<"\tpush {%r0}"<<std::endl;
+      	    file<<"\tpush {%r0}"<<std::endl;
 	    stack_depth += 4;
         }
       }
 
-      // file<<"\tldr %r0, [%sp, #0]"<<std::endl;
-      // file<<"\tadd %sp, %sp, $0"<<std::endl;
       file<<"\tpop {%r0}"<<std::endl;
       stack_depth -= 4;
       if (!on_stack) {

@@ -15,6 +15,9 @@ void Command::addPrintString(char * arg)
 void Command::addPrintLiteral(char * arg)
 {      m_literals.push_back(std::string(arg)); m_execOrder.push_back(cmd_type::PRINT); }
 
+void Command::addLiteral(char * arg)
+{ m_literals.push_back(std::string(arg)); m_execOrder.push_back(cmd_type::NOPRINT); }
+
 void Command::addReadInt(char * arg)
 { m_int_vars.push_back(std::string(arg)); m_execOrder.push_back(cmd_type::READ_INT); }
 
@@ -161,6 +164,9 @@ void Command::addToExpressionStack(char * arg)
     toPush.expr_type = exp_type::LOGOR;
   } else if (as_string == "deref") {
     toPush.expr_type = exp_type::PTRDEREF;
+  } else if (as_string == "literal") {
+    toPush.expr_type = exp_type::LITERAL;
+    m_exp_literals.push(m_literals.size() - 1);
   } else if (p(as_string)) {
     toPush.expr_type = exp_type::AN_INT;
     toPush.int_arg  = std::stoi(as_string);
