@@ -4,6 +4,8 @@
 #include <iostream>
 #include "y.tab.h"
 
+// int yylineno = 1;
+
 static  void yyunput (int c, char * buf_ptr);
 
 void myunputc(int c) {
@@ -12,10 +14,13 @@ void myunputc(int c) {
 
 %}
 
+%option yylineno
+
 %x BLK_COMMENT
 %x LINE_COMMENT
 %%
-[\t \n]+ { /** discard spaces and tabs! **/ }
+[\t ]+ { /** discard spaces and tabs! **/ }
+[\n] { ++yylineno; }
 
 <INITIAL>"@;" BEGIN(BLK_COMMENT);
 <BLK_COMMENT>"@;" BEGIN(INITIAL);

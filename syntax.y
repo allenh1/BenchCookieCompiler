@@ -186,7 +186,8 @@ loop:
 %%
 void yyerror(const char * s)
 {
-	fprintf(stderr,"%s", s);
+  extern int yylineno;
+  fprintf(stderr,"Error on line %d: %s\n", yylineno, s);
 }
 
 #if 0

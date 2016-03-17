@@ -1,4 +1,7 @@
-all: adder hello_world name multiplier compare also
+all: compiler adder hello_world name multiplier compare also
+
+compiler:
+	cd ../ && make && cd examples
 
 also: mult_table strtest compute strlen
 

@@ -280,6 +280,10 @@ void Command::doMain(std::ostream & file)
 
       ++stringdex;
     } else if (m_execOrder[x] == cmd_type::READ_LINE) {
+      /**
+       * @todo This causes a warning. That's not good.
+       */
+
       file<<"\tldr %r0, =IS"<<stringdex<<std::endl;
       file<<"\tbl gets"<<std::endl;
       file<<std::endl;
