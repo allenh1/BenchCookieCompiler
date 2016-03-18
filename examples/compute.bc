@@ -28,30 +28,23 @@ if multeq ? then
 endif
 
 int zerotest ?
-zerotest <-- ( num2 > 0 ) + ( num2 < 0 ) ?
+zerotest <-- num2 != 0 ?
 int iszero ? iszero <-- num2 = 0 ?
-divdeq <-- divdeq * zerotest ?
-int notdividing ?
+int notdividing ? int printit ? printit <-- 0 ?
 
-notdividing <-- pluseq + subteq + multeq ?
+notdividing <-- pluseq || subteq || multeq ?
 
-if divdeq ? then
+if divdeq && num2 ? then
   result <-- num1 / num2 ?
   iszero <-- 0 ?
+  printit <-- 1 ?
 endif
 
-if notdividing ? then
-  iszero <-- 0 ?
-endif
-
-if iszero ? then
+if divdeq && iszero ? then
   print "Invalid input\n" ?
 endif
 
-int printit ?
-printit <-- notdividing + divdeq ?
-
-if printit ? then
+if printit || notdividing ? then
   print "Returned answer:" ?
   print_int result ?
   print "\n" ?

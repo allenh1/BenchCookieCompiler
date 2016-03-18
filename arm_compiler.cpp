@@ -85,6 +85,16 @@ void Command::evaluate_expression(std::ostream & file)
       file<<"\tldr %r1, [%r1]"<<std::endl;
       file<<"\tpush {%r1}"<<std::endl;
       continue;
+    } else if (aExpType == LOGNOT) {
+      file<<"\tpop %{r1}"<<std::endl;
+      file<<"\tmov %r0, $1"<<std::endl;
+      file<<"\tcmp %r1, $0"<<std::endl;
+      file<<"\tbeq NSZ"<<nszcount<<std::endl;
+      file<<"\tmov %r0, $0"<<nszcount<<std::endl;
+      file<<"NSZ"<<nszcount<<":"<<std::endl;
+      file<<"\tpush {%r0}"<<std::endl;
+      ++nszcount;
+      continue;
     }
     
     if (stack_depth >= 8) {
@@ -130,21 +140,56 @@ void Command::evaluate_expression(std::ostream & file)
       file<<"DONEDIVIDE"<<divcount-1<<":"<<std::endl;
       file<<"\tmul %r0, %r0, %r5"<<std::endl;
       goto do_default;
+    case MOD:
+      file<<"\tudiv %r0, %r2, %r1"<<std::endl;
+      file<<"\tmls %r2, %r1, %r0, %r2"<<std::endl;
+      goto do_default;
     case GT:
-      file<<"\tmov %r0, $1"<<std::endl;
-      file<<"\tcmp %r2, %r1"<<"\t@ Backwards because stack"<<std::endl;
-      file<<std::endl;
-      file<<"\tbgt NOSETZERO"<<nszcount<<std::endl;
-      file<<"\tmov %r0, $0"<<std::endl;
-      file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+      t1 = arg_types.top(); arg_types.pop();
+      t2 = arg_types.top(); arg_types.pop();
+      if (t1 == STRNG && t2 == STRNG) {
+	file<<"\tmov %r0, %r1"<<std::endl;
+	file<<"\tmov %r1, %r2"<<std::endl;
+	file<<"\tbl strcmp"<<std::endl;
+	file<<"\tpush {%r0}"<<std::endl;
+	file<<"\tmov %r0, $1"<<std::endl;
+	file<<"\tpop {%r1}"<<std::endl;
+	file<<"\tmov %r2, #-1"<<std::endl;
+	file<<"\tcmp %r2, %r1"<<std::endl;
+	file<<"\tbeq NOSETZERO"<<nszcount<<std::endl;
+	file<<"\tmov %r0, $0"<<std::endl;
+	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+      } else {
+	file<<"\tmov %r0, $1"<<std::endl;
+	file<<"\tcmp %r2, %r1"<<std::endl;
+	file<<"\tbgt NOSETZERO"<<nszcount<<std::endl;
+	file<<"\tmov %r0, $0"<<std::endl;
+	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+      }
       nszcount++;
       goto do_default;
     case GEQ:
-      file<<"\tmov %r0, $1"<<std::endl;
-      file<<"\tcmp %r2, %r1"<<std::endl;
-      file<<"\tbge NOSETZERO"<<nszcount<<std::endl;
-      file<<"\tmov %r0, $0"<<std::endl;
-      file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+      t1 = arg_types.top(); arg_types.pop();
+      t2 = arg_types.top(); arg_types.pop();
+      if (t1 == STRNG && t2 == STRNG) {
+	file<<"\tmov %r0, %r1"<<std::endl;
+	file<<"\tmov %r1, %r2"<<std::endl;
+	file<<"\tbl strcmp"<<std::endl;
+	file<<"\tpush {%r0}"<<std::endl;
+	file<<"\tmov %r0, $1"<<std::endl;
+	file<<"\tpop {%r1}"<<std::endl;
+	file<<"\tmov %r2, #-1"<<std::endl;
+	file<<"\tcmp %r2, %r1"<<std::endl;
+	file<<"\tbeq NOSETZERO"<<nszcount<<std::endl;
+	file<<"\tmov %r0, $0"<<std::endl;
+	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+      } else {
+	file<<"\tmov %r0, $1"<<std::endl;
+	file<<"\tcmp %r2, %r1"<<std::endl;
+	file<<"\tbge NOSETZERO"<<nszcount<<std::endl;
+	file<<"\tmov %r0, $0"<<std::endl;
+	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+      }
       nszcount++;
       goto do_default;
     case LT:
@@ -172,11 +217,29 @@ void Command::evaluate_expression(std::ostream & file)
       nszcount++;
       goto do_default;
     case LEQ:
-      file<<"\tmov %r0, $1"<<std::endl;
-      file<<"\tcmp %r2, %r1"<<std::endl;
-      file<<"\tble NOSETZERO"<<nszcount<<std::endl;
-      file<<"\tmov %r0, $0"<<std::endl;
-      file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+      t1 = arg_types.top(); arg_types.pop();
+      t2 = arg_types.top(); arg_types.pop();
+      if (t1 == STRNG && t2 == STRNG) {
+	file<<"\tmov %r0, %r1"<<std::endl;
+	file<<"\tmov %r1, %r2"<<std::endl;
+	file<<"\tbl strcmp"<<std::endl;
+	file<<"\tpush {%r0}"<<std::endl;
+	file<<"\tmov %r0, $1"<<std::endl;
+	file<<"\tpop {%r1}"<<std::endl;
+	file<<"\tmov %r2, #-1"<<std::endl;
+	file<<"\tcmp %r2, %r1"<<std::endl;
+	file<<"\tbeq NOSETZERO"<<nszcount<<std::endl;
+	file<<"\tmov %r2, %r1"<<std::endl;
+	file<<"\tbeq NOSETZERO"<<nszcount<<std::endl;
+	file<<"\tmov %r0, $0"<<std::endl;
+	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+      } else {
+	file<<"\tmov %r0, $1"<<std::endl;
+	file<<"\tcmp %r2, %r1"<<std::endl;
+	file<<"\tble NOSETZERO"<<nszcount<<std::endl;
+	file<<"\tmov %r0, $0"<<std::endl;
+	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+      }
       nszcount++;
       goto do_default;
     case EQ:
@@ -197,10 +260,69 @@ void Command::evaluate_expression(std::ostream & file)
       } else {
 	file<<"\tmov %r0, $1"<<std::endl;
 	file<<"\tcmp %r2, %r1"<<std::endl;
-	file<<"\tble NOSETZERO"<<nszcount<<std::endl;
+	file<<"\tbeq NOSETZERO"<<nszcount<<std::endl;
 	file<<"\tmov %r0, $0"<<std::endl;
 	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
       }
+      nszcount++;
+      goto do_default;
+    case NEQ:
+      t1 = arg_types.top(); arg_types.pop();
+      t2 = STRNG;// arg_types.top(); arg_types.pop();
+      if (t1 == STRNG && t2 == STRNG) {
+	file<<"\tmov %r0, %r1"<<std::endl;
+	file<<"\tmov %r1, %r2"<<std::endl;
+	file<<"\tbl strcmp"<<std::endl;
+	file<<"\tpush {%r0}"<<std::endl;
+	file<<"\tmov %r0, $1"<<std::endl;
+	file<<"\tpop {%r1}"<<std::endl;
+	file<<"\tmov %r2, $0"<<std::endl;
+	file<<"\tcmp %r2, %r1"<<std::endl;
+	file<<"\tbne NOSETZERO"<<nszcount<<std::endl;
+	file<<"\tmov %r0, $0"<<std::endl;
+	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+      } else {
+	file<<"\tmov %r0, $1"<<std::endl;
+	file<<"\tcmp %r2, %r1"<<std::endl;
+	file<<"\tbne NOSETZERO"<<nszcount<<std::endl;
+	file<<"\tmov %r0, $0"<<std::endl;
+	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+      }
+      nszcount++;
+      goto do_default;
+    case LOGAND:
+      file<<"\tmul %r3, %r1, %r2"<<std::endl;
+      file<<"\tmov %r0, $1"<<std::endl;
+      file<<"\tmov %r4, $0"<<std::endl;
+      file<<"\tcmp %r3, %r4"<<std::endl;
+      file<<"\tbne NSZ"<<nszcount<<std::endl;
+      file<<"\tmov %r0, $0"<<std::endl;
+      file<<"NSZ"<<nszcount<<": @ label used to set as true"<<std::endl;
+      nszcount++;
+      goto do_default;
+    case LOGOR:
+      file<<"\tadd %r1, %r1, %r2"<<std::endl;
+      file<<"\tmov %r0, $1"<<std::endl;
+      file<<"\tcmp %r1, $0"<<std::endl;
+      file<<"\tbne NSZ"<<nszcount<<std::endl;
+      file<<"\tmov %r0, $0"<<std::endl;
+      file<<"NSZ"<<nszcount<<": @ label used to set as true"<<std::endl;
+      nszcount++;
+      goto do_default;
+    case LOGXOR:
+      file<<"\tmul %r3, %r1, %r2"<<std::endl;
+      file<<"\tadd %r4, %r1, %r2"<<std::endl;
+      file<<"\tmov %r1, $1"<<std::endl;
+      file<<"\tmov %r2, $1"<<std::endl;
+      file<<"\tcmp %r3, $0"<<std::endl;
+      file<<"\tbne NSZ"<<nszcount<<std::endl;
+      file<<"\tmov %r1, $0"<<std::endl;
+      file<<"NSZ"<<nszcount++<<": @ r1 <-- a && b"<<std::endl;
+      file<<"\tcmp %r4, $0"<<std::endl;
+      file<<"\tbne NSZ"<<nszcount<<std::endl;
+      file<"\tmov %r2, $0";
+      file<<"NSZ"<<nszcount<<": @ r1 <-- a || b"<<std::endl;
+      file<<"\teor %r0, %r1, %r2"<<std::endl;
       nszcount++;
       goto do_default;
     default:
@@ -209,8 +331,11 @@ void Command::evaluate_expression(std::ostream & file)
       std::cerr<<"Don't use things I didn't implement yet."<<std::endl;
       exit(101);
     do_default:
+      // if (eval.size()) {
       file<<"\tpush {%r0}"<<std::endl;
       stack_depth += 4;
+	// }
+      // else ;
     }
   }
 }

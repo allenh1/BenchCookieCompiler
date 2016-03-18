@@ -146,6 +146,8 @@ void Command::addToExpressionStack(char * arg)
     toPush.expr_type = exp_type::MOD;
   } else if (as_string == "==") {
     toPush.expr_type = exp_type::EQ;
+  } else if (as_string == "!=") {
+    toPush.expr_type = exp_type::NEQ;
   } else if (as_string == "<=") {
     toPush.expr_type = exp_type::LEQ;
   } else if (as_string == ">=") {
