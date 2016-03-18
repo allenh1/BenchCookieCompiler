@@ -218,6 +218,10 @@ void Command::addIntAssignment(char * varname) {
 
 #ifdef __arm__
 #include "arm_compiler.cpp"
+#elifdef __X86__
+#include "x86_compiler.cpp"
+#else
+#include "x86_64_compiler.cpp"
 #endif
 
 int yyparse(void);
@@ -248,11 +252,9 @@ int main(int argc, char ** argv)
 
     char * output = strndup(argv[1], strstr(argv[1], ".") - argv[1]);
 
-    #ifdef __arm__
+  
     exec_args[0] = "gcc";
-    #else
-    exec_args[0] = "armv7a-hardfloat-linux-gnueabi-gcc";
-    #endif
+  
     if (Command::cmd.isCCallable()) {
       // Create a c-callable function.
       std::string out2 = std::string(output);

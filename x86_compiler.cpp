@@ -1,20 +1,17 @@
 // allocate enough space for drew-sized strings.
-#ifndef ARM_COMPILER_SOURCE
-#define ARM_COMPILER_SOURCE
+#ifndef X86_COMPILER_SOURCE
+#define X86_COMPILER_SOURCE
 #define MAX_STRING_SIZE 100
 void Command::doBSS(std::ostream & file)
 {
-  file<<"\tsection .bss"<<std::endl<<std::endl;
+  file<<"\t.bss"<<std::endl<<std::endl;
   for (int x = 0; x < m_string_vars.size(); ++x) {
-    file<<"IS"<<x<<"\tdb "<<MAX_STRING_SIZE<<std::endl;
-    file<<"\tdup(?)"<<std::endl;
+    file<<"\t.lcomm IS"<<x<<", "<<MAX_STRING_SIZE<<std::endl;
   }
 
   /** Place locals' linked list **/
 
-  file<<"locals\tdb 400"<<std::endl;
-  file<<"\tdup(?)"<<std::endl;
-  // file<<"\t.lcomm locals, 400";
+  file<<"\t.lcomm locals, 400";
   file<<std::endl;
 }
 
@@ -25,7 +22,7 @@ void Command::doData(std::ostream & file)
   /** Place the string literals **/
 
   for (int x = 0; x < m_literals.size(); ++x) {
-    file<<"S"<<x<<":\t.ascii \""<<m_literals[x]<<"\\0\""<<std::endl;
+    file<<"S"<<x<<":\t.string \""<<m_literals[x]<<"\\0\""<<std::endl;
   }
 
   std::cout<<std::endl;
@@ -36,17 +33,358 @@ void Command::doData(std::ostream & file)
     file<<"I"<<x<<":\t.word 0"<<std::endl;
   }
   
-  file<<std::endl<<"string_fmt:\t.ascii \"%s\\0\""<<std::endl;
-  file<<"num_fmt:\t.ascii \"%d\\0\""<<std::endl;
-  file<<"TRUE_STORY:\t.ascii \"true\\0\""<<std::endl;
-  file<<"FALSE:\t.ascii \"false\\0\""<<std::endl;
+  file<<std::endl<<".string_fmt:\t.string \"%s\\0\""<<std::endl;
+  file<<".num_fmt:\t.string \"%d\\0\""<<std::endl;
+  file<<".TRUE:\t.string \"true\\0\""<<std::endl;
+  file<<".FALSE:\t.string \"false\\0\""<<std::endl;
+}
+#define INTGR 67
+#define STRNG 68
+
+void Command::evaluate_expression(std::ostream & file)
+{
+  static ssize_t nszcount = 0;
+  static ssize_t divcount = 0;
+  static ssize_t exprdex  = 0;
+  
+  unsigned int t1, t2;
+
+  /** Begin Stack Evaluation **/
+  std::stack<math_expression> * expr = m_evaluations[exprdex++];
+  std::stack<unsigned short> arg_types;
+  ssize_t stack_depth = 0;
+
+  std::stack<math_expression> eval;// = *expr;
+  for(; !expr->empty(); eval.push(expr->top()), expr->pop(), 1);
+  std::stack<math_expression> curr;
+ 
+  for (; eval.size();) {
+    math_expression a = eval.top(); eval.pop();
+    Command::exp_type type = static_cast<Command::exp_type>(a.expr_type);
+    exp_type aExpType = static_cast<Command::exp_type>(a.expr_type);
+    if (aExpType == VAR)  {
+      push_variable(a.pirate_name, arg_types, file);
+      stack_depth += 4;
+      continue;
+    } else if (aExpType == AN_INT) {
+      file<<"\tpush "<<a.int_arg<<std::endl;
+      stack_depth += 4;
+      arg_types.push(INTGR);
+      continue;
+    } else if (aExpType == LITERAL) {
+      arg_types.push(STRNG);
+      ssize_t idx = m_exp_literals.front();
+      m_exp_literals.pop();
+      file<<"\tpush S"<<idx<<std::endl;
+      // file<<"\tpush {%r1}"<<std::endl;
+      stack_depth += 4;
+      continue;
+    } else if (aExpType == PTRDEREF) {
+      file<<"\tpop ebx"<<std::endl;
+      file<<"\tmov ebx, [ebx]"<<std::endl;
+      file<<"\tpush ebx"<<std::endl;
+      continue;
+    } else if (aExpType == LOGNOT) {
+      file<<"\tpop %{r1}"<<std::endl;
+      file<<"\tmov %r0, $1"<<std::endl;
+      file<<"\tcmp %r1, $0"<<std::endl;
+      file<<"\tbeq NSZ"<<nszcount<<std::endl;
+      file<<"\tmov %r0, $0"<<nszcount<<std::endl;
+      file<<"NSZ"<<nszcount<<":"<<std::endl;
+      file<<"\tpush {%r0}"<<std::endl;
+      ++nszcount;
+      continue;
+    }
+    
+    if (stack_depth >= 8) {
+      file<<"\tpop {%r1, %r2}"<<std::endl;
+      stack_depth -= 8;
+    } else continue;
+    switch (type) {
+    case ADD:
+      /**
+       * Oh, how I want to use a comma expression...
+       * You know, the stack_push((b=stack_pop(),a=stack_pop(),a+b))
+       * kind of comma expresion.
+       */
+      file<<"\tadd %r0, %r1, %r2"<<std::endl;
+      goto do_default;
+    case SUB:
+      file<<"\tsub %r0, %r2, %r1"<<std::endl;
+      goto do_default;
+    case MUL:
+      file<<"\tmul %r0, %r1, %r2"<<std::endl;
+      goto do_default;
+    case DIV:
+      /* @todo case divide by zero */
+      file<<"\tmov %r0, $0"<<std::endl<<std::endl;
+      file<<"\tcmp %r1, $0"<<std::endl;
+      file<<"\tmov %r5, $1"<<std::endl;
+      file<<"\tbge NLZ1"<<divcount<<std::endl;
+      file<<"\tmov %r3, #-1"<<std::endl;
+      file<<"\tmul %r5, %r5, %r3"<<std::endl;
+      file<<"\tmul %r1, %r1, %r3"<<std::endl;
+      file<<"NLZ1"<<divcount<<":"<<std::endl;
+      file<<"\tcmp %r2, $0"<<std::endl;
+      file<<"\tbge NLZ2"<<divcount<<std::endl;
+      file<<"\tmov %r3, #-1"<<std::endl;
+      file<<"\tmul %r5, %r3, %r5"<<std::endl;
+      file<<"\tmul %r2, %r3, %r2"<<std::endl;
+      file<<"NLZ2"<<divcount<<":"<<std::endl;
+      file<<"DIVIDE"<<divcount++<<": cmp %r1, %r2"<<std::endl;
+      file<<"\t bgt DONEDIVIDE"<<divcount-1<<std::endl;
+      file<<"\t sub %r2, %r2, %r1"<<std::endl;
+      file<<"\t add %r0, $1"<<std::endl;
+      file<<"\t b DIVIDE"<<divcount-1<<std::endl;
+      file<<"DONEDIVIDE"<<divcount-1<<":"<<std::endl;
+      file<<"\tmul %r0, %r0, %r5"<<std::endl;
+      goto do_default;
+    case MOD:
+      file<<"\tudiv %r0, %r2, %r1"<<std::endl;
+      file<<"\tmls %r2, %r1, %r0, %r2"<<std::endl;
+      goto do_default;
+    case GT:
+      t1 = arg_types.top(); arg_types.pop();
+      t2 = arg_types.top(); arg_types.pop();
+      if (t1 == STRNG && t2 == STRNG) {
+	file<<"\tmov %r0, %r1"<<std::endl;
+	file<<"\tmov %r1, %r2"<<std::endl;
+	file<<"\tbl strcmp"<<std::endl;
+	file<<"\tpush {%r0}"<<std::endl;
+	file<<"\tmov %r0, $1"<<std::endl;
+	file<<"\tpop {%r1}"<<std::endl;
+	file<<"\tmov %r2, #-1"<<std::endl;
+	file<<"\tcmp %r2, %r1"<<std::endl;
+	file<<"\tbeq NOSETZERO"<<nszcount<<std::endl;
+	file<<"\tmov %r0, $0"<<std::endl;
+	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+      } else {
+	file<<"\tmov %r0, $1"<<std::endl;
+	file<<"\tcmp %r2, %r1"<<std::endl;
+	file<<"\tbgt NOSETZERO"<<nszcount<<std::endl;
+	file<<"\tmov %r0, $0"<<std::endl;
+	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+      }
+      nszcount++;
+      goto do_default;
+    case GEQ:
+      t1 = arg_types.top(); arg_types.pop();
+      t2 = arg_types.top(); arg_types.pop();
+      if (t1 == STRNG && t2 == STRNG) {
+	file<<"\tmov %r0, %r1"<<std::endl;
+	file<<"\tmov %r1, %r2"<<std::endl;
+	file<<"\tbl strcmp"<<std::endl;
+	file<<"\tpush {%r0}"<<std::endl;
+	file<<"\tmov %r0, $1"<<std::endl;
+	file<<"\tpop {%r1}"<<std::endl;
+	file<<"\tmov %r2, #-1"<<std::endl;
+	file<<"\tcmp %r2, %r1"<<std::endl;
+	file<<"\tbeq NOSETZERO"<<nszcount<<std::endl;
+	file<<"\tmov %r0, $0"<<std::endl;
+	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+      } else {
+	file<<"\tmov %r0, $1"<<std::endl;
+	file<<"\tcmp %r2, %r1"<<std::endl;
+	file<<"\tbge NOSETZERO"<<nszcount<<std::endl;
+	file<<"\tmov %r0, $0"<<std::endl;
+	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+      }
+      nszcount++;
+      goto do_default;
+    case LT:
+      t1 = arg_types.top(); arg_types.pop();
+      t2 = arg_types.top(); arg_types.pop();
+      if (t1 == STRNG && t2 == STRNG) {
+	file<<"\tmov %r0, %r1"<<std::endl;
+	file<<"\tmov %r1, %r2"<<std::endl;
+	file<<"\tbl strcmp"<<std::endl;
+	file<<"\tpush {%r0}"<<std::endl;
+	file<<"\tmov %r0, $1"<<std::endl;
+	file<<"\tpop {%r1}"<<std::endl;
+	file<<"\tmov %r2, #-1"<<std::endl;
+	file<<"\tcmp %r2, %r1"<<std::endl;
+	file<<"\tbeq NOSETZERO"<<nszcount<<std::endl;
+	file<<"\tmov %r0, $0"<<std::endl;
+	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+      } else {
+	file<<"\tmov %r0, $1"<<std::endl;
+	file<<"\tcmp %r2, %r1"<<std::endl;
+	file<<"\tblt NOSETZERO"<<nszcount<<std::endl;
+	file<<"\tmov %r0, $0"<<std::endl;
+	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+      }
+      nszcount++;
+      goto do_default;
+    case LEQ:
+      t1 = arg_types.top(); arg_types.pop();
+      t2 = arg_types.top(); arg_types.pop();
+      if (t1 == STRNG && t2 == STRNG) {
+	file<<"\tmov %r0, %r1"<<std::endl;
+	file<<"\tmov %r1, %r2"<<std::endl;
+	file<<"\tbl strcmp"<<std::endl;
+	file<<"\tpush {%r0}"<<std::endl;
+	file<<"\tmov %r0, $1"<<std::endl;
+	file<<"\tpop {%r1}"<<std::endl;
+	file<<"\tmov %r2, #-1"<<std::endl;
+	file<<"\tcmp %r2, %r1"<<std::endl;
+	file<<"\tbeq NOSETZERO"<<nszcount<<std::endl;
+	file<<"\tmov %r2, %r1"<<std::endl;
+	file<<"\tbeq NOSETZERO"<<nszcount<<std::endl;
+	file<<"\tmov %r0, $0"<<std::endl;
+	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+      } else {
+	file<<"\tmov %r0, $1"<<std::endl;
+	file<<"\tcmp %r2, %r1"<<std::endl;
+	file<<"\tble NOSETZERO"<<nszcount<<std::endl;
+	file<<"\tmov %r0, $0"<<std::endl;
+	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+      }
+      nszcount++;
+      goto do_default;
+    case EQ:
+      t1 = arg_types.top(); arg_types.pop();
+      t2 = STRNG;// arg_types.top(); arg_types.pop();
+      if (t1 == STRNG && t2 == STRNG) {
+	file<<"\tmov %r0, %r1"<<std::endl;
+	file<<"\tmov %r1, %r2"<<std::endl;
+	file<<"\tbl strcmp"<<std::endl;
+	file<<"\tpush {%r0}"<<std::endl;
+	file<<"\tmov %r0, $1"<<std::endl;
+	file<<"\tpop {%r1}"<<std::endl;
+	file<<"\tmov %r2, $0"<<std::endl;
+	file<<"\tcmp %r2, %r1"<<std::endl;
+	file<<"\tbeq NOSETZERO"<<nszcount<<std::endl;
+	file<<"\tmov %r0, $0"<<std::endl;
+	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+      } else {
+	file<<"\tmov %r0, $1"<<std::endl;
+	file<<"\tcmp %r2, %r1"<<std::endl;
+	file<<"\tbeq NOSETZERO"<<nszcount<<std::endl;
+	file<<"\tmov %r0, $0"<<std::endl;
+	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+      }
+      nszcount++;
+      goto do_default;
+    case NEQ:
+      t1 = arg_types.top(); arg_types.pop();
+      t2 = STRNG;// arg_types.top(); arg_types.pop();
+      if (t1 == STRNG && t2 == STRNG) {
+	file<<"\tmov %r0, %r1"<<std::endl;
+	file<<"\tmov %r1, %r2"<<std::endl;
+	file<<"\tbl strcmp"<<std::endl;
+	file<<"\tpush {%r0}"<<std::endl;
+	file<<"\tmov %r0, $1"<<std::endl;
+	file<<"\tpop {%r1}"<<std::endl;
+	file<<"\tmov %r2, $0"<<std::endl;
+	file<<"\tcmp %r2, %r1"<<std::endl;
+	file<<"\tbne NOSETZERO"<<nszcount<<std::endl;
+	file<<"\tmov %r0, $0"<<std::endl;
+	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+      } else {
+	file<<"\tmov %r0, $1"<<std::endl;
+	file<<"\tcmp %r2, %r1"<<std::endl;
+	file<<"\tbne NOSETZERO"<<nszcount<<std::endl;
+	file<<"\tmov %r0, $0"<<std::endl;
+	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+      }
+      nszcount++;
+      goto do_default;
+    case LOGAND:
+      file<<"\tmul %r3, %r1, %r2"<<std::endl;
+      file<<"\tmov %r0, $1"<<std::endl;
+      file<<"\tmov %r4, $0"<<std::endl;
+      file<<"\tcmp %r3, %r4"<<std::endl;
+      file<<"\tbne NSZ"<<nszcount<<std::endl;
+      file<<"\tmov %r0, $0"<<std::endl;
+      file<<"NSZ"<<nszcount<<": @ label used to set as true"<<std::endl;
+      nszcount++;
+      goto do_default;
+    case LOGOR:
+      file<<"\tadd %r1, %r1, %r2"<<std::endl;
+      file<<"\tmov %r0, $1"<<std::endl;
+      file<<"\tcmp %r1, $0"<<std::endl;
+      file<<"\tbne NSZ"<<nszcount<<std::endl;
+      file<<"\tmov %r0, $0"<<std::endl;
+      file<<"NSZ"<<nszcount<<": @ label used to set as true"<<std::endl;
+      nszcount++;
+      goto do_default;
+    case LOGXOR:
+      file<<"\tmul %r3, %r1, %r2"<<std::endl;
+      file<<"\tadd %r4, %r1, %r2"<<std::endl;
+      file<<"\tmov %r1, $1"<<std::endl;
+      file<<"\tmov %r2, $1"<<std::endl;
+      file<<"\tcmp %r3, $0"<<std::endl;
+      file<<"\tbne NSZ"<<nszcount<<std::endl;
+      file<<"\tmov %r1, $0"<<std::endl;
+      file<<"NSZ"<<nszcount++<<": @ r1 <-- a && b"<<std::endl;
+      file<<"\tcmp %r4, $0"<<std::endl;
+      file<<"\tbne NSZ"<<nszcount<<std::endl;
+      file<<"\tmov %r2, $0";
+      file<<"NSZ"<<nszcount<<": @ r1 <-- a || b"<<std::endl;
+      file<<"\teor %r0, %r1, %r2"<<std::endl;
+      nszcount++;
+      goto do_default;
+    default:
+      std::cerr<<"Welp. You did it. You tried it."<<std::endl;
+      std::cerr<<"This is what happens. You get mad."<<std::endl;
+      std::cerr<<"Don't use things I didn't implement yet."<<std::endl;
+      exit(101);
+    do_default:
+      // if (eval.size()) {
+      file<<"\tpush {%r0}"<<std::endl;
+      stack_depth += 4;
+	// }
+      // else ;
+    }
+  }
+}
+
+void Command::push_variable(std::string var_name, std::stack<unsigned short> & vartype,
+			    std::ostream & file)
+{
+  std::string varname = var_name;
+  for (int x = 0; x < m_int_declarations.size(); ++x) {
+    if (m_int_declarations[x] == varname) {
+      file<<"\tmov %r1, %r9"<<std::endl;
+      file<<"\tldr %r1, [%r9, #"<<4 * x<<"]"<<std::endl;
+      file<<"\tldr %r1, [%r1]"<<std::endl;
+      file<<"\tpush {%r1}"<<std::endl;
+      vartype.push(INTGR);
+      return;
+    }
+  }
+    
+  for (int x = 0; x < m_int_vars.size(); ++x) {
+    if (m_int_vars[x] == varname) {
+      file<<"\tldr %r1, =I"<<x<<std::endl;
+      file<<"\tldr %r1, [%r1]"<<std::endl;
+      file<<"\tpush {%r1}"<<std::endl;
+      vartype.push(INTGR);
+      return;
+    }
+  }
+  
+  for (int x = 0; x < m_string_vars.size(); ++x) {
+    if (m_string_vars[x] == varname) {
+      file<<"\tldr %r1, =IS"<<x<<std::endl;
+      file<<"\tpush {%r1}"<<std::endl;
+      vartype.push(STRNG);
+      return;
+    }
+  }
+
+  std::cerr<<"Error: could not resolve variable \"";
+  std::cerr<<varname<<"\"."<<std::endl;
+  exit(6);
 }
 
 void Command::doMain(std::ostream & file)
 {
-  int y; size_t divcount = 0, nszcount = 0;
+  int y;
   const size_t local_count = 0;// Idk, yo. Just... somewhere.
-  file<<"main:"<<std::endl;
+  if (m_is_c_callable) file<<m_function_name<<":"<<std::endl;
+  else file<<"main:"<<std::endl;
+
   file<<"\tldr %r9, =locals"<<std::endl;
   file<<"\t@ Make space for locals"<<std::endl;
   /**
@@ -55,7 +393,7 @@ void Command::doMain(std::ostream & file)
 
   for (int x = 0, intassdex = 0, stringdex = 0, exprdex = 0,
 	 intdex = 0, pintdex = 0, pstringdex = 0, litdex = 0,
-	 pbooldex = 0, sints = 0, ifndex = 0, forndex = 0;
+	 pbooldex = 0, sints = 0, ifndex = 0, forndex = 0, nszcount = 0;
       x < m_execOrder.size(); ++x) {
 
     if (m_execOrder[x] == cmd_type::READ_STRING) {
@@ -64,6 +402,16 @@ void Command::doMain(std::ostream & file)
       file<<"\tbl scanf"<<std::endl;
       file<<std::endl;
 
+      ++stringdex;
+    } else if (m_execOrder[x] == cmd_type::READ_LINE) {
+      /**
+       * @todo This causes a warning. That's not good.
+       */
+
+      file<<"\tldr %r0, =IS"<<stringdex<<std::endl;
+      file<<"\tbl gets"<<std::endl;
+      file<<std::endl;
+      
       ++stringdex;
     } else if (m_execOrder[x] == cmd_type::DECL_INT) {
       file<<"\tmov %r0, $4"<<std::endl;
@@ -74,25 +422,8 @@ void Command::doMain(std::ostream & file)
       m_int_vars.push_back(m_int_declarations[sints++]);
     } else if (m_execOrder[x] == cmd_type::BEGIN_IF) {
       // find the variable we depend on!
-      std::string var_name = m_if_deps[ifndex];
-      for (y = 0; y < m_int_vars.size(); ++y) {
-	if (m_int_vars[y] == var_name) break;
-      } int z = 0;
-      for (z = 0; z < m_int_declarations.size(); ++z) {
-	if (m_int_declarations[z] == var_name) break;
-      } if (z < m_int_declarations.size()) {
-	file<<"\tmov %r1, %r9"<<std::endl;
-	file<<"\tldr %r1, [%r1, #"<<4*z<<"]"<<std::endl;
-	file<<"\tldr %r0, [%r1]"<<std::endl;
-      } else if (y < m_int_vars.size())  {
-	file<<"\tldr %r0, =I"<<y<<std::endl;
-	file<<"\tldr %r0, [%r0]"<<std::endl;
-      } else {
-	std::cerr<<"Error: if-dependent variable "<<var_name;
-	std::cerr<<" not yet declared!"<<std::endl;
-	exit(6);
-      }
-
+      evaluate_expression(file);
+      file<<"\tpop {%r0}"<<std::endl;
       file<<"IF"<<ifndex<<":\tcmp %r0, $0"<<std::endl;
       file<<"\tbeq END_IF"<<ifndex<<std::endl;
       ++ifndex;
@@ -132,6 +463,8 @@ void Command::doMain(std::ostream & file)
       file<<std::endl;
 
       ++intdex;
+    } else if (m_execOrder[x] == cmd_type::NOPRINT) {
+      ++litdex;
     } else if (m_execOrder[x] == cmd_type::PRINT) {
       file<<"\tldr %r0, =S"<<litdex++<<std::endl;
       file<<"\tbl printf"<<std::endl<<std::endl;
@@ -185,7 +518,7 @@ void Command::doMain(std::ostream & file)
       ++pbooldex;
     } else if (m_execOrder[x] == cmd_type::INTGETS) {
       std::string int_gets = m_int_assigns[intassdex];
-      ssize_t offset;
+      ssize_t offset; 
       for (y = 0; y < m_int_vars.size(); ++y) {
 	if (m_int_vars[y] == m_int_assigns[intassdex]) break;
       } int z; bool on_stack = false; int * last_z = new int;
@@ -198,130 +531,10 @@ void Command::doMain(std::ostream & file)
 	exit(3);
       } *last_z = z;
 
-      /** Begin Stack Evaluation **/
-      std::stack<math_expression> * expr = m_evaluations[exprdex++];
+      evaluate_expression(file);
 
-      ssize_t stack_depth = 0;
-
-      std::stack<math_expression> eval;// = *expr;
-      for(; !expr->empty(); eval.push(expr->top()), expr->pop(), 1);
-      std::stack<math_expression> curr;
-
-      for (; eval.size();) {
-        math_expression a = eval.top(); eval.pop();
-	Command::exp_type type = static_cast<Command::exp_type>(a.expr_type);
-	exp_type aExpType = static_cast<Command::exp_type>(a.expr_type);
-
-        if (aExpType == VAR)  {
-          for (y = 0; y < m_int_vars.size(); ++y) {
-            if (m_int_vars[y] == a.pirate_name) break;
-          } if (y == m_int_vars.size()) {
-            std::cerr<<"Error: variable "<<a.pirate_name<<" was not declared!"<<std::endl;
-            exit(3);
-          } int z;
-	  for (z = 0; z < m_int_declarations.size(); ++z) {
-	    if (m_int_declarations[z] == m_int_vars[y]) break;
-	  } if (z != m_int_declarations.size()) {
-	    file<<"\tmov %r1, %r9"<<std::endl;
-	    file<<"\tldr %r1, [%r9, #"<<4 * z<<"]"<<std::endl;
-	    file<<"\tldr %r1, [%r1]"<<std::endl;
-	  } else {
-	    file<<"\tldr %r1, =I"<<y<<std::endl;
-	    file<<"\tldr %r1, [%r1]"<<std::endl;
-	  }
-	  file<<"\tpush {%r1}"<<std::endl;
-	  // file<<"\tsub %sp, %sp, $4"<<std::endl;
-	  stack_depth += 4; continue;
-        } else if (aExpType == AN_INT) {
-          file<<"\tmov %r1, $"<<a.int_arg<<std::endl;
-	  file<<"\tpush {%r1}"<<std::endl;
-	  stack_depth += 4;
-	  continue;
-        }
-
-	if (stack_depth >= 8) {
-          // file<<std::endl<<"\tldr %r1, [%sp]"<<std::endl;
-	  // file<<"\tldr %r2, [%sp, #4]"<<std::endl;
-	  // file<<"\tadd %sp, %sp, $8"<<std::endl;
-	  // {%r1}"<<std::endl;
-	  file<<"\tpop {%r1, %r2}"<<std::endl;
-	  stack_depth -= 8;
-	} else continue;
-        switch (type) {
-          case ADD:
-            /**
-             * Oh, how I want to use a comma expression...
-             * You know, the stack_push((b=stack_pop(),a=stack_pop(),a+b))
-             * kind of comma expresion.
-             */
-            file<<"\tadd %r0, %r1, %r2"<<std::endl;
-            goto do_default;
-          case SUB:
-            file<<"\tsub %r0, %r2, %r1"<<std::endl;
-            goto do_default;
-          case MUL:
-            file<<"\tmul %r0, %r1, %r2"<<std::endl;
-            goto do_default;
-          case DIV:
-	    /* @todo case divide by zero */
-	    file<<"\tmov %r0, $0"<<std::endl<<std::endl;
-	    file<<"DIVIDE"<<divcount++<<": cmp %r1, %r2"<<std::endl;
-	    file<<"\t bgt DONEDIVIDE"<<divcount-1<<std::endl;
-	    file<<"\t sub %r2, %r2, %r1"<<std::endl;
-	    file<<"\t add %r0, $1"<<std::endl;
-            file<<"\t b DIVIDE"<<divcount-1<<std::endl;
-	    file<<"DONEDIVIDE"<<divcount-1<<":"<<std::endl;
-            goto do_default;
-	  case GT:
-	    file<<"\tmov %r0, $1"<<std::endl;
-	    file<<"\tcmp %r2, %r1"<<"\t@ Backwards because stack"<<std::endl;
-	    file<<std::endl;
-	    file<<"\tbgt NOSETZERO"<<nszcount<<std::endl;
-	    file<<"\tmov %r0, $0"<<std::endl;
-	    file<<"NOSETZERO"<<nszcount<<": @label used to set as true"<<std::endl;
-	    nszcount++;
-	    goto do_default;
-	  case GEQ:
-	    file<<"\tmov %r0, $1"<<std::endl;
-	    file<<"\tcmp %r2, %r1"<<std::endl;
-	    file<<"\tbge NOSETZERO"<<nszcount<<std::endl;
-	    file<<"\tmov %r0, $0"<<std::endl;
-	    file<<"NOSETZERO"<<nszcount<<": @label used to set as true"<<std::endl;
-	    nszcount++;
-	    goto do_default;
-	  case LT:
-	    file<<"\tmov %r0, $1"<<std::endl;
-	    file<<"\tcmp %r2, %r1"<<std::endl;
-	    file<<"\tblt NOSETZERO"<<nszcount<<std::endl;
-	    file<<"\tmov %r0, $0"<<std::endl;
-	    file<<"NOSETZERO"<<nszcount<<": @label used to set as true"<<std::endl;
-	    nszcount++;
-	    goto do_default;
-	  case LEQ:
-	    file<<"\tmov %r0, $1"<<std::endl;
-	    file<<"\tcmp %r2, %r1"<<std::endl;
-	    file<<"\tble NOSETZERO"<<nszcount<<std::endl;
-	    file<<"\tmov %r0, $0"<<std::endl;
-	    file<<"NOSETZERO"<<nszcount<<": @label used to set as true"<<std::endl;
-	    nszcount++;
-	    goto do_default;
-          default:
-	    std::cerr<<"Welp. You did it. You tried it."<<std::endl;
-	    std::cerr<<"This is what happens. You get mad."<<std::endl;
-	    std::cerr<<"Don't use things I didn't implement yet."<<std::endl;
-	    exit(101);
-          do_default:
-            // file<<"\tstr %r0, [%sp, #-4]"<<std::endl;
-	    // file<<"\tsub %sp, %sp, $4"<<std::endl;
-	    file<<"\tpush {%r0}"<<std::endl;
-	    stack_depth += 4;
-        }
-      }
-
-      // file<<"\tldr %r0, [%sp, #0]"<<std::endl;
-      // file<<"\tadd %sp, %sp, $0"<<std::endl;
       file<<"\tpop {%r0}"<<std::endl;
-      stack_depth -= 4;
+   
       if (!on_stack) {
         int x;
        for (x = 0; x < m_int_vars.size(); ++x) {
@@ -334,8 +547,6 @@ void Command::doMain(std::ostream & file)
 	     delete last_z;
       }
       file<<"\tstr %r0, [%r3]"<<std::endl;
-      if (stack_depth) file<<"\tadd %sp, $"<<stack_depth<<"\t@ Destroy stack"<<std::endl;
-      else file<<"\t@ Yayy! Stack has nothing left."<<std::endl<<"\t@ You should be happy. I am."<<std::endl;
       file<<std::endl; intassdex++;
     }
   }
@@ -350,7 +561,7 @@ void Command::writeAssembly()
     exit(2);
   }
   file <<"/**"<<std::endl;
-  file <<" *"<<m_filename<<std::endl;
+  file <<" * "<<m_filename<<std::endl;
   file <<" *"<<std::endl;
   file <<" * Generated by Bench Cookie Compiler!"<<std::endl;
   file <<" * Bench Cookie is... Experimental. Don't be mad."<<std::endl;
@@ -364,11 +575,11 @@ void Command::writeAssembly()
 
   file<<std::endl<<std::endl;
   file<<"\t.text"<<std::endl;
-  file<<"\t.global main"<<std::endl;
+  if (!m_is_c_callable) file<<"\t.global main"<<std::endl;
   file<<"\t.global printf"<<std::endl;
   file<<"\t.global scanf"<<std::endl;
   file<<"\t.global malloc"<<std::endl;
-
+  if (m_is_c_callable) file<<"\texport "<<m_function_name<<std::endl;
   doMain(file);
 
   /**
@@ -393,12 +604,46 @@ void Command::writeAssembly()
    * @DrewBarthel: printf is a toilet.
    */
   file<<"\tbl fflush"<<std::endl;
-  file<<"\tmov %r7, $1"<<std::endl;
 
   /** Toilet has been flushed **/
 
-  file<<"\tswi $0"<<std::endl;
-  file<<"\t.end"<<std::endl;
-  file.close();
+  if (!m_is_c_callable) {
+    file<<"\tmov %r7, $1"<<std::endl;
+
+    file<<"\tswi $0"<<std::endl;
+    file<<"\t.end"<<std::endl;
+    file.close();
+  } else {
+    if (m_current_returns.size() > 3) {
+      /** @todo **/
+    } else {
+      /**
+       * Load the values into r0, r1, r2, r3 as necessary.
+       */
+      file<<"\tmov %r9, =locals"<<std::endl;
+      for (int x = 0; x < m_current_returns.size(); ++x) {
+	int y, z;
+	for (y = 0; y < m_int_vars.size(); ++y) {
+            if (m_int_vars[y] == m_current_returns[x]) break;
+          } if (y == m_int_vars.size()) {
+            std::cerr<<"Error: returned variable "<<m_current_returns[x]
+		     <<" was not declared!"<<std::endl;
+            exit(9);
+          } for (z = 0; z < m_int_declarations.size(); ++z) {
+	    if (m_int_declarations[z] == m_int_vars[y]) break;
+	  } if (z != m_int_declarations.size()) {
+	    file<<"\tmov %r6, %r9"<<std::endl;
+	    file<<"\tldr %r6, [%r9, #"<<4 * z<<"]"<<std::endl;
+	    file<<"\tldr %r6, [%r6]"<<std::endl;
+	  } else {
+	    file<<"\tldr %r6, =I"<<y<<std::endl;
+	    file<<"\tldr %r6, [%r6]"<<std::endl;
+	  }
+	  file<<"\tmov %r"<<x<<", %r6"<<std::endl;
+      }
+    }
+    file<<"\tbx lr"<<std::endl;
+    file<<"\t.end"<<std::endl;
+  }
 }// allocate enough space for drew-sized strings.
 #endif

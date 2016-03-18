@@ -14,7 +14,7 @@ y.tab.o: syntax.y
 	$(YACC) -d syntax.y
 	$(CC) -c y.tab.c
 
-command.o: command.cc arm_compiler.cpp
+command.o: command.cc arm_compiler.cpp x86_64_compiler.cpp
 	$(CC) -c command.cc
 
 bcc: y.tab.o lex.yy.o command.o
