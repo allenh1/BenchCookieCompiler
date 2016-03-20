@@ -117,6 +117,7 @@ if_else_block:
 expr:
     exp expr
     | exp WHAAAT { Command::cmd.markEndOfExpression(); }
+    | exp { Command::cmd.markEndOfExpression(); }
     ;
 
 exp:
@@ -148,7 +149,7 @@ exp:
     | PLUS exp %prec UNARY { Command::cmd.addToExpressionStack(strdup("u+")); }
     | MINUS exp %prec UNARY { Command::cmd.addToExpressionStack(strdup("u-")); }
     | DEREF exp %prec UNARY { Command::cmd.addToExpressionStack(strdup("deref")); }
-    | OPAREN expr EPAREN { }
+    | OPAREN exp EPAREN %prec BINARY { }
     ;
 
 arg:
