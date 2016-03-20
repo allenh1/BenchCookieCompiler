@@ -6,7 +6,7 @@ void Command::doBSS(std::ostream & file)
 {
   file<<"\t.bss"<<std::endl<<std::endl;
   for (int x = 0; x < m_string_vars.size(); ++x) {
-    file<<"\t.IS"<<x<<":\t.fill "<<MAX_STRING_SIZE<<std::endl;
+    file<<"\t.comm .IS"<<x<<", "<<MAX_STRING_SIZE<<", 32"<<std::endl;
   }
 
   /** Place locals' linked list **/
@@ -25,7 +25,7 @@ void Command::doData(std::ostream & file)
     file<<"\t.S"<<x<<":\t\t.string \""<<m_literals[x]<<"\\0\""<<std::endl;
   }
 
-  file<<std::endl<<".string_fmt:\t.string \"%s\\0\""<<std::endl;
+  file<<std::endl<<"\t.string_fmt:\t.string \"%s\\0\""<<std::endl;
   file<<"\t.num_fmt:\t.string \"%d\\0\""<<std::endl;
   file<<"\t.TRUE:\t\t.string \"true\\0\""<<std::endl;
   file<<"\t.FALSE:\t\t.string \"false\\0\""<<std::endl;
@@ -36,7 +36,7 @@ void Command::doData(std::ostream & file)
   /** Place the integers. **/
 
   for (int x = 0; x < m_int_vars.size() - m_int_declarations.size(); ++x) {
-    file<<"I"<<x<<":\t.word 0"<<std::endl;
+    file<<"I"<<x<<":\t.fill 64"<<std::endl;
   }
 }
 #define INTGR 67
@@ -68,7 +68,7 @@ void Command::evaluate_expression(std::ostream & file)
       stack_depth += 4;
       continue;
     } else if (aExpType == AN_INT) {
-      file<<"\tpush "<<a.int_arg<<std::endl;
+      file<<"\tpushq "<<a.int_arg<<std::endl;
       stack_depth += 4;
       arg_types.push(INTGR);
       continue;
@@ -398,12 +398,11 @@ void Command::doMain(std::ostream & file)
       x < m_execOrder.size(); ++x) {
 
     if (m_execOrder[x] == cmd_type::READ_STRING) {
-      file<<"\t; Read input string"<<std::endl;
-      file<<"\tmovq $.string_fmt, %rdi"<<std::endl;
-      file<<"\tmovq %rsp, %rsi"<<std::endl;
+      file<<"\t/* Read input string */"<<std::endl;
+      file<<"\tmovl $.string_fmt, %edi"<<std::endl;
+      file<<"\tmovl $.IS"<<stringdex<<", %esi"<<std::endl;
       file<<"\txor %rax, %rax"<<std::endl;
       file<<"\tcall scanf"<<std::endl;
-      file<<"\tpushq %rax, $.IS"<<stringdex<<std::endl;
       file<<std::endl;
 
       ++stringdex;
@@ -411,7 +410,7 @@ void Command::doMain(std::ostream & file)
       /**
        * @todo This causes a warning. That's not good.
        */
-
+      
       file<<"\tldr %r0, =IS"<<stringdex<<std::endl;
       file<<"\tbl gets"<<std::endl;
       file<<std::endl;
@@ -477,7 +476,7 @@ void Command::doMain(std::ostream & file)
       file<<"\txor %rax, %rax"<<std::endl;
       file<<"\tcall printf"<<std::endl<<std::endl;
     } else if (m_execOrder[x] == cmd_type::PRINT_STR) {
-      file<<"\tldr %r0, =string_fmt"<<std::endl;
+      file<<"\tmovl $.string_fmt, %eax"<<std::endl;
       for (y = 0; y < m_string_vars.size(); ++y) {
         if (m_string_vars[y] == m_print_strings[pstringdex]) break;
       } if (y == m_string_vars.size()) {
@@ -485,11 +484,13 @@ void Command::doMain(std::ostream & file)
         exit(3);
       }
       /** 'y' am I a dumbass? **/
-      file<<"\tldr %r1, =IS"<<y<<std::endl;
-      file<<"\tbl printf"<<std::endl;
+      file<<"\tmovl $.IS"<<y<<", %esi"<<std::endl;
+      file<<"\tmovq %rax, %rdi"<<std::endl;
+      file<<"\txor %rax, %rax"<<std::endl;
+      file<<"\tcall printf"<<std::endl<<std::endl;
       ++pstringdex;
     } else if (m_execOrder[x] == cmd_type::PRINT_NUM) {
-      file<<"\tldr %r0, =num_fmt"<<std::endl;
+      file<<"\tmovq $.num_fmt, %rdi"<<std::endl;
       for (y = 0; y < m_int_vars.size(); ++y) {
         if (m_int_vars[y] == m_print_ints[pintdex]) break;
       } if (y == m_int_vars.size()) {
