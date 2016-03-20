@@ -61,7 +61,7 @@ void Command::declPointer(char * dom, char * cod)
 {
   std::string point_to = std::string(cod);
   int x;
-  
+
   for (x = 0; x < m_int_vars.size(); ++x) {
     if (m_int_vars[x] == point_to) break;
   } if (x != m_int_vars.size()) {
@@ -218,7 +218,7 @@ void Command::addIntAssignment(char * varname) {
 
 #ifdef __arm__
 #include "arm_compiler.cpp"
-#elifdef __X86__
+#elif  __X86__
 #include "x86_compiler.cpp"
 #else
 #include "x86_64_compiler.cpp"
