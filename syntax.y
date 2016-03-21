@@ -95,8 +95,7 @@ print_literal:
 
 declare:
     INT WORD WHAAAT { Command::cmd.declInt($2); }
-//    | DOUBLE WORD WHAAAT { Command::cmd.declDouble($2); }
-//    | STRING WORD WHAAAT { Command::cmd.declString($2); }
+    | STRING WORD WHAAAT { Command::cmd.declString($2); }
     ;
 
 declaration:
@@ -169,8 +168,8 @@ returns:
     ;
 
 function:
-      FUNC WORD '(' arglist ')' COLON {
-	Command::cmd.startFunctionBody($2);
+      FUNC WORD OPAREN arglist EPAREN COLON {
+	Command::cmd.setFunctionName($2);
       }
       | FUNC WORD COLON { Command::cmd.setFunctionName($2); }
       | END POINT_TO OBRACKET returns EBRACKET {
