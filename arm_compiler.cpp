@@ -383,9 +383,12 @@ void Command::doMain(std::ostream & file)
 {
   int y;
   const size_t local_count = 0;// Idk, yo. Just... somewhere.
-  if (m_is_c_callable) file<<m_function_name<<":"<<std::endl;
+  if (m_is_c_callable) {
+    file<<m_function_name<<":"<<std::endl;
+    file<<"\tpush {%lr}"<<std::endl;
+  }
   else file<<"main:"<<std::endl;
-
+  
   file<<"\tldr %r9, =locals"<<std::endl;
   file<<"\t@ Make space for locals"<<std::endl;
   /**
@@ -580,7 +583,9 @@ void Command::writeAssembly()
   file<<"\t.global printf"<<std::endl;
   file<<"\t.global scanf"<<std::endl;
   file<<"\t.global malloc"<<std::endl;
-  if (m_is_c_callable) file<<"\texport "<<m_function_name<<std::endl;
+
+  if (m_is_c_callable) file<<"\t.global "<<m_function_name<<std::endl;
+  
   doMain(file);
 
   /**
@@ -590,14 +595,14 @@ void Command::writeAssembly()
    *       Maybe change file to a list
    *       and search for last usage?
    */
-  file<<"\t@ Free local vars"<<std::endl;
+  if (m_int_declarations.size()) file<<"\t@ Free local vars"<<std::endl;
   for (int x = 0; x < m_int_declarations.size(); ++x) {
     file<<"\tldr %r0, =locals"<<std::endl;
     file<<"\tldr %r0, [%r0, #"<<4 * x<<"]"<<std::endl;
     file<<"\tbl free"<<std::endl<<std::endl;
   }
 
-  file<<"\t@ locals are free"<<std::endl<<std::endl;
+  if (m_int_declarations.size()) file<<"\t@ locals are free"<<std::endl<<std::endl;
 
   file<<std::endl;
   file<<"\tmov %r0, $0"<<std::endl;
@@ -621,7 +626,7 @@ void Command::writeAssembly()
       /**
        * Load the values into r0, r1, r2, r3 as necessary.
        */
-      file<<"\tmov %r9, =locals"<<std::endl;
+      if (m_current_returns.size()) file<<"\tldr %r9, =locals"<<std::endl;
       for (int x = 0; x < m_current_returns.size(); ++x) {
 	int y, z;
 	for (y = 0; y < m_int_vars.size(); ++y) {
@@ -643,6 +648,7 @@ void Command::writeAssembly()
 	  file<<"\tmov %r"<<x<<", %r6"<<std::endl;
       }
     }
+    file<<"\tpop {%lr}\t@ Restore return register"<<std::endl;
     file<<"\tbx lr"<<std::endl;
     file<<"\t.end"<<std::endl;
   }

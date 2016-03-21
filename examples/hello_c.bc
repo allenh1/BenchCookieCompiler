@@ -1,0 +1,16 @@
+@;
+ ; This is an example of a c-subroutine in bench cookie.
+ ; We call this function from the main function of the
+ ; C program "hello_bcc.c"
+@;
+
+declare c_function ?
+
+func hello_c :
+  print "Hello, C Compiler!\n" ?
+  int x ? x <-- ( 3 + 2 ) * 5 ?
+  print "( 3 + 2 ) * 5 = " ? print_int x ?
+  print "\n" ?
+end
+
+done!

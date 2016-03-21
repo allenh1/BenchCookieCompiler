@@ -172,7 +172,7 @@ function:
       FUNC WORD '(' arglist ')' COLON {
 	Command::cmd.startFunctionBody($2);
       }
-      | FUNC WORD ':' { Command::cmd.setFunctionName($2); }
+      | FUNC WORD COLON { Command::cmd.setFunctionName($2); }
       | END POINT_TO OBRACKET returns EBRACKET {
 	Command::cmd.markEndOfFunction();
       }
