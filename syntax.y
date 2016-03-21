@@ -125,30 +125,30 @@ exp:
       Command::cmd.addLiteral($1);
       Command::cmd.addToExpressionStack(strdup("literal"));
     }
-    | exp LOR exp %prec BINARY { Command::cmd.addToExpressionStack(strdup("||")); }
-    | exp LXOR exp %prec BINARY { Command::cmd.addToExpressionStack(strdup("^^")); }
-    | exp LAND exp %prec BINARY { Command::cmd.addToExpressionStack(strdup("&&")); }
-    | exp OR exp %prec BINARY { Command::cmd.addToExpressionStack(strdup("|")); }
-    | exp XOR exp %prec BINARY { Command::cmd.addToExpressionStack(strdup("^")); }
-    | exp AND exp %prec BINARY { Command::cmd.addToExpressionStack(strdup("&")); }
-    | exp NOTEQUALS exp %prec BINARY { Command::cmd.addToExpressionStack(strdup("!=")); }
-    | exp EQUALS exp %prec BINARY { Command::cmd.addToExpressionStack(strdup("==")); }
-    | exp GREAT exp %prec BINARY { Command::cmd.addToExpressionStack(strdup(">")); }
-    | exp GREATEQ exp %prec BINARY { Command::cmd.addToExpressionStack(strdup(">=")); }
-    | exp LESS exp %prec BINARY { Command::cmd.addToExpressionStack(strdup("<")); }
-    | exp LESSEQ exp %prec BINARY { Command::cmd.addToExpressionStack(strdup("<=")); }
-    | exp TOOGREAT exp %prec BINARY { Command::cmd.addToExpressionStack(strdup(">>")); }
-    | exp TOOLESS exp %prec BINARY { Command::cmd.addToExpressionStack(strdup("<<")); }
-    | exp PLUS exp %prec BINARY { Command::cmd.addToExpressionStack(strdup("+")); }
-    | exp MINUS exp %prec BINARY { Command::cmd.addToExpressionStack(strdup("-")); }
-    | exp TIMES exp %prec BINARY { Command::cmd.addToExpressionStack(strdup("*")); }
-    | exp DIVIDE exp %prec BINARY { Command::cmd.addToExpressionStack(strdup("/")); }
-    | NOT exp %prec UNARY { Command::cmd.addToExpressionStack(strdup("!")); }
-    | TWIDLE exp %prec UNARY { Command::cmd.addToExpressionStack(strdup("~")); }
-    | PLUS exp %prec UNARY { Command::cmd.addToExpressionStack(strdup("u+")); }
-    | MINUS exp %prec UNARY { Command::cmd.addToExpressionStack(strdup("u-")); }
-    | DEREF exp %prec UNARY { Command::cmd.addToExpressionStack(strdup("deref")); }
-    | OPAREN exp EPAREN %prec BINARY { }
+    | exp LOR exp { Command::cmd.addToExpressionStack(strdup("||")); }
+    | exp LXOR exp { Command::cmd.addToExpressionStack(strdup("^^")); }
+    | exp LAND exp { Command::cmd.addToExpressionStack(strdup("&&")); }
+    | exp OR exp { Command::cmd.addToExpressionStack(strdup("|")); }
+    | exp XOR exp { Command::cmd.addToExpressionStack(strdup("^")); }
+    | exp AND exp { Command::cmd.addToExpressionStack(strdup("&")); }
+    | exp NOTEQUALS exp { Command::cmd.addToExpressionStack(strdup("!=")); }
+    | exp EQUALS exp { Command::cmd.addToExpressionStack(strdup("==")); }
+    | exp GREAT exp { Command::cmd.addToExpressionStack(strdup(">")); }
+    | exp GREATEQ exp { Command::cmd.addToExpressionStack(strdup(">=")); }
+    | exp LESS exp { Command::cmd.addToExpressionStack(strdup("<")); }
+    | exp LESSEQ exp { Command::cmd.addToExpressionStack(strdup("<=")); }
+    | exp TOOGREAT exp { Command::cmd.addToExpressionStack(strdup(">>")); }
+    | exp TOOLESS exp { Command::cmd.addToExpressionStack(strdup("<<")); }
+    | exp PLUS exp { Command::cmd.addToExpressionStack(strdup("+")); }
+    | exp MINUS exp { Command::cmd.addToExpressionStack(strdup("-")); }
+    | exp TIMES exp { Command::cmd.addToExpressionStack(strdup("*")); }
+    | exp DIVIDE exp { Command::cmd.addToExpressionStack(strdup("/")); }
+    | NOT exp { Command::cmd.addToExpressionStack(strdup("!")); }
+    | TWIDLE exp { Command::cmd.addToExpressionStack(strdup("~")); }
+    | PLUS exp { Command::cmd.addToExpressionStack(strdup("u+")); }
+    | MINUS exp { Command::cmd.addToExpressionStack(strdup("u-")); }
+    | DEREF exp { Command::cmd.addToExpressionStack(strdup("deref")); }
+    | OPAREN exp EPAREN { }
     ;
 
 arg:
