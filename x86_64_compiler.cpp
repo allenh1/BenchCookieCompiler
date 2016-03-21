@@ -11,7 +11,7 @@ void Command::doBSS(std::ostream & file)
 
   /** Place locals' linked list **/
 
-  file<<"\t.locals:\t.fill 400";
+  file<<"\t.comm .locals, 400, 64";
   file<<std::endl;
 }
 
@@ -417,11 +417,12 @@ void Command::doMain(std::ostream & file)
       
       ++stringdex;
     } else if (m_execOrder[x] == cmd_type::DECL_INT) {
-      file<<"\tmovq $4, %rdi"<<std::endl;
+      file<<"\tmovq $8, %rdi"<<std::endl;
       file<<"\tmovq %rsp, %rsi"<<std::endl;
       file<<"\txor %rax, %rax"<<std::endl;
       file<<"\tcall malloc"<<std::endl;
-      file<<"\tstr %r0, [%r9, #"<<sints * 4<<"]"<<std::endl;
+      file<<"\tmovq $.locals, %r9"<<std::endl;
+      file<<"\tmovq %rax, "<<sints * 8<<"(%r9)"<<std::endl;
 
       file<<std::endl;
       m_int_vars.push_back(m_int_declarations[sints++]);
@@ -601,7 +602,8 @@ void Command::writeAssembly()
   file<<"\t/* Free local vars */"<<std::endl;
   for (int x = 0; x < m_int_declarations.size(); ++x) {
     file<<"\tmovq $.locals, %rdi"<<std::endl;
-    file<<"\tmovq %rdi, "<<4 * x<<"(%rdi)"<<std::endl;
+    file<<"\taddq $"<<8 * x<<", %rdi"<<std::endl;
+    file<<"\tmovq %rax, %rdi"<<std::endl;
     file<<"\txor %rax, %rax"<<std::endl;
     file<<"\tcall free"<<std::endl<<std::endl;
   }
