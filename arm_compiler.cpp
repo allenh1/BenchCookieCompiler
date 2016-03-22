@@ -81,15 +81,9 @@ void Command::evaluate_expression(std::ostream & file)
       stack_depth += 4;
       continue;
     } else if (aExpType == PTRDEREF) {
-      if (arg_types.top() == STRNG) {
-	file<<"\tpop {%r1}"<<std::endl;
-	file<<"\tldrb %r1, [%r1]"<<"\t\t\t\t@ Deref "<<a.pirate_name<<std::endl;
-	file<<"\tpush {%r1}"<<std::endl;
-      } else {
-	file<<"\tpop {%r1}"<<std::endl;
-	file<<"\tldr %r1, [%r1]"<<std::endl;
-	file<<"\tpush {%r1}"<<std::endl;
-      } stack_depth += 4;
+      file<<"\tpop {%r1}"<<std::endl;
+      file<<"\tldr %r1, [%r1]"<<std::endl;
+      file<<"\tpush {%r1}"<<std::endl;
       continue;
     } else if (aExpType == LOGNOT) {
       file<<"\tpop %{r1}"<<std::endl;
@@ -360,17 +354,6 @@ void Command::push_variable(std::string var_name, std::stack<unsigned short> & v
       return;
     }
   }
-
-  for (int x = 0; x < m_str_declarations.size(); ++x) {
-    if (m_str_declarations[x] == varname) {
-      file<<"\tldr %r9, =locals"<<std::endl;
-      file<<"\tldr %r1, [%r9, $"<<4 * x<<"]"<<std::endl;
-      file<<"\tldr %r1, [%r1]"<<std::endl;
-      file<<"\tpush {%r1}"<<std::endl;
-      vartype.push(STRNG);
-      return;
-    }
-  }
     
   for (int x = 0; x < m_int_vars.size(); ++x) {
     if (m_int_vars[x] == varname) {
@@ -412,8 +395,8 @@ void Command::doMain(std::ostream & file)
    * @todo use main's function calls for subroutines.
    */
 
-  for (int x = 0, intassdex = 0, stringdex = 0, exprdex = 0, strassdex = 0,
-	 intdex = 0, pintdex = 0, pstringdex = 0, litdex = 0, sstrs = 0,
+  for (int x = 0, intassdex = 0, stringdex = 0, exprdex = 0,
+	 intdex = 0, pintdex = 0, pstringdex = 0, litdex = 0,
 	 pbooldex = 0, sints = 0, ifndex = 0, forndex = 0, nszcount = 0;
       x < m_execOrder.size(); ++x) {
 
@@ -441,13 +424,6 @@ void Command::doMain(std::ostream & file)
 
       file<<std::endl;
       m_int_vars.push_back(m_int_declarations[sints++]);
-    } else if (m_execOrder[x] == cmd_type::DECL_STR) {
-      file<<"\tmov %r0, $1024"<<std::endl;
-      file<<"\tbl malloc"<<std::endl;
-      file<<"\tstr %r0, [%r9, #"<<sstrs * 4<<"]"<<std::endl;
-
-      file<<std::endl;
-      m_string_vars.push_back(m_str_declarations[sstrs++]);
     } else if (m_execOrder[x] == cmd_type::BEGIN_IF) {
       // find the variable we depend on!
       evaluate_expression(file);
@@ -498,25 +474,14 @@ void Command::doMain(std::ostream & file)
       file<<"\tbl printf"<<std::endl<<std::endl;
     } else if (m_execOrder[x] == cmd_type::PRINT_STR) {
       file<<"\tldr %r0, =string_fmt"<<std::endl;
-      bool found = false;
-      for (int z = 0; z < m_str_declarations.size(); ++z) {
-	if (m_str_declarations[z] == m_print_strings[pstringdex]) {
-	  file<<"\tldr %r1, =locals"<<std::endl;
-	  file<<"\tldr %r1, [%r1, $"<<4 * z<<"]"<<std::endl;
-	  file<<"\tldr %r1, [%r1]"<<std::endl;
-	  found = true; break;
-	}
+      for (y = 0; y < m_string_vars.size(); ++y) {
+        if (m_string_vars[y] == m_print_strings[pstringdex]) break;
+      } if (y == m_string_vars.size()) {
+        std::cerr<<"Error: variable "<<m_string_vars[y]<<" was not declared!"<<std::endl;
+        exit(3);
       }
-      if (!found) {
-	for (y = 0; y < m_string_vars.size(); ++y) {
-	  if (m_string_vars[y] == m_print_strings[pstringdex]) break;
-	} if (y == m_string_vars.size()) {
-	  std::cerr<<"Error: variable "<<m_string_vars[y]<<" was not declared!"<<std::endl;
-	  exit(3);
-	}
-	/** 'y' am I a dumbass? **/
-	file<<"\tldr %r1, =IS"<<y<<std::endl;
-      }
+      /** 'y' am I a dumbass? **/
+      file<<"\tldr %r1, =IS"<<y<<std::endl;
       file<<"\tbl printf"<<std::endl;
       ++pstringdex;
     } else if (m_execOrder[x] == cmd_type::PRINT_NUM) {
@@ -555,19 +520,6 @@ void Command::doMain(std::ostream & file)
       file<<"NOISTRUE"<<nszcount-1<<":"<<std::endl;
       file<<"\tbl printf"<<std::endl;
       ++pbooldex;
-    } else if (m_execOrder[x] == cmd_type::STRGETS) {
-      std::string str_gets = m_str_assigns[strassdex];
-      ssize_t offset;
-
-      evaluate_expression(file);
-      file<<"\tpop {%r8}"<<"\t\t\t\t@ r8 <-- eval (src)"<<std::endl;
-      std::stack<unsigned short> temp;
-      push_variable(str_gets, temp, file);
-      file<<"\tpop {%r6}"<<"\t\t\t\t@ r6 <-- "<<str_gets<<" (dest)"<<std::endl;
-      file<<"\tmov %r0, %r6"<<std::endl;
-      file<<"\tmov %r1, %r8"<<std::endl;
-      file<<"\tbl strdup"<<"\t\t\t\t@ r0 <-- string"<<std::endl;
-      file<<std::endl; ++strassdex;
     } else if (m_execOrder[x] == cmd_type::INTGETS) {
       std::string int_gets = m_int_assigns[intassdex];
       ssize_t offset; 
@@ -645,41 +597,9 @@ void Command::writeAssembly()
    */
   if (m_int_declarations.size()) file<<"\t@ Free local vars"<<std::endl;
   for (int x = 0; x < m_int_declarations.size(); ++x) {
-    bool found = false;
-    for (int y = 0; y < m_current_returns.size(); ++x) {
-      if (m_current_returns[y] == m_int_declarations[x]) { found = true; break; }
-    }
-
-    /**
-     * This says that we should only do this
-     * if the local is NOT returned by a C-Subroutine.
-     * If so, then we don't kill it with fire.
-     */
-
-    if (!found) {
-      file<<"\tldr %r0, =locals"<<std::endl;
-      file<<"\tldr %r0, [%r0, #"<<4 * x<<"]"<<std::endl;
-      file<<"\tbl free"<<"\t\t\t\t@ Free "<<m_int_declarations[x]<<std::endl<<std::endl;
-    }
-  }
-
-  for (int x = 0; x < 0; ++x) { //< m_str_declarations.size(); ++x) {
-    bool found = false;
-    for (int y = 0; y < m_current_returns.size(); ++x) {
-      if (m_current_returns[y] == m_str_declarations[x]) { found = true; break; }
-    }
-
-    /**
-     * This says that we should only do this
-     * if the local is NOT returned by a C-Subroutine.
-     * If so, then we don't kill it with fire.
-     */
-
-    if (!found) {
-      file<<"\tldr %r0, =locals"<<std::endl;
-      file<<"\tldr %r0, [%r0, #"<<4 * x<<"]"<<std::endl;
-      file<<"\tbl free"<<"\t\t\t\t@ Free "<<m_str_declarations[x]<<std::endl<<std::endl;
-    }
+    file<<"\tldr %r0, =locals"<<std::endl;
+    file<<"\tldr %r0, [%r0, #"<<4 * x<<"]"<<std::endl;
+    file<<"\tbl free"<<std::endl<<std::endl;
   }
 
   if (m_int_declarations.size()) file<<"\t@ locals are free"<<std::endl<<std::endl;

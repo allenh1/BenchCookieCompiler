@@ -7,21 +7,18 @@
 
 declare c_function ?
 
-; The pointer is treated as an integer,
-; at least as far as we are concerned.
+func strlen ( char_ptr str ) :
+  char_ptr temp ?
+  temp <-- str ?
 
-func mystrlen ( int str ) :
-  int temp ? temp <-- str ?
-  int test ? test <-- deref str ?
-
+  int test ?
+  test <-- deref temp ?
+  
   for test do
-    str <-- str + 1 ?
-    test <-- deref str ?
+    temp <-- temp + 1 ?
+    test <-- deref temp ?
   endfor
 
   int length ?
-  length <-- str - temp ?
-end --> [ length ] @ This is a return list -- can be multiple vars.
-done!
-
-  
+  length <-- temp - str ?
+end --> [ length ] @ this is a return list -- can be multiple vars.

@@ -1,9 +1,9 @@
-all: compiler adder hello_world name multiplier hello_c also
+all: compiler adder hello_world name multiplier compare also
 
 compiler:
 	cd ../ && make && cd examples
 
-also: mult_table strtest compare compute strlen hello_bcc
+also: mult_table strtest compute strlen hello_bcc
 
 adder: adder.bc
 	../bcc adder.s < adder.bc > /dev/null
@@ -35,7 +35,7 @@ strlen: strlen.bc
 hello_c.o: hello_c.bc
 	../bcc hello_c.s < hello_c.bc > /dev/null
 
-hello_bcc: hello_bcc.c
+hello_bcc: hello_c.o hello_bcc.c
 	gcc hello_bcc.c hello_c.o -o hello_bcc
 
 clean:

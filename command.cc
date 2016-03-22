@@ -23,7 +23,6 @@ void Command::addReadInt(char * arg)
 
 void Command::addReadLine(char * arg)
 { m_string_vars.push_back(std::string(arg)); m_execOrder.push_back(cmd_type::READ_LINE); }
-
 void Command::addToArgList(char * type, char * name)
 {
   std::string stype = std::string(type);
@@ -53,9 +52,9 @@ void Command::declInt(char * arg)
 
 void Command::declString(char * arg)
 {
-  m_str_declarations.push_back(std::string(arg));
+  m_string_declarations.push_back(std::string(arg));
   m_string_vars.push_back(std::string(arg));
-  m_execOrder.push_back(cmd_type::DECL_STR);
+  m_execOrder.push_back(cmd_type::DECL_STRING);
 }
 
 void Command::declPointer(char * dom, char * cod)
@@ -117,7 +116,9 @@ void Command::markEndFor() { m_execOrder.push_back(cmd_type::END_FOR); }
 void Command::markEndOfFunction() { m_execOrder.push_back(cmd_type::ENDFUNC); }
 
 void Command::addToReturnList(char * arg)
-{ m_current_returns.push_back(arg); }
+{
+  m_current_returns.push_back(arg);
+}
 
 void Command::setFunctionName(char * arg)
 { m_function_name = std::string(arg); }
@@ -205,8 +206,8 @@ void Command::addIntAssignment(char * varname) {
 
   for (int x = 0; x < m_string_vars.size(); ++x) {
     if (m_string_vars[x] == var) {
-      m_str_assigns.push_back(var);
-      m_execOrder.push_back(cmd_type::STRGETS);
+      m_string_assigns.push_back(var);
+      m_execOrder.push_back(cmd_type::STRINGGETS);
       return;
     }
   }

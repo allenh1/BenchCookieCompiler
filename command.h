@@ -58,7 +58,7 @@ public:
   Command(){};
 
   enum cmd_type { READ_STRING, READ_INT, PRINT, PRINT_STR, PRINT_NUM, INTGETS,
-		  EXPR, DECL_INT, DECL_DOUBLE, DECL_STR, DECL_BOOL, STRGETS,
+		  EXPR, DECL_INT, DECL_DOUBLE, DECL_STRING, DECL_BOOL, STRINGGETS,
 		  PRINT_BOOL, BEGIN_IF, END_IF, BEGIN_FOR, END_FOR, PTRGETS, ENDFUNC,
                   NOPRINT, READ_LINE };
  
@@ -150,14 +150,14 @@ private:
   std::vector<std::string> m_lines;
   std::vector<std::string> m_int_assigns;
   std::vector<std::string> m_bool_assigns;
-  std::vector<std::string> m_str_assigns;
+  std::vector<std::string> m_string_assigns;
   std::vector<pointer_assignment> m_pointer_assigns;
   std::vector<std::string> m_if_deps;
   std::vector<std::string> m_for_deps;
   std::vector<std::string> m_bool_vars;
   std::vector<std::string> m_fileContents;
   std::vector<std::string> m_int_declarations;
-  std::vector<std::string> m_str_declarations;
+  std::vector<std::string> m_string_declarations;
   std::vector<std::string> m_int_pointers;
   std::vector<std::string> m_char_pointers;
   std::vector<cmd_type> m_execOrder;
