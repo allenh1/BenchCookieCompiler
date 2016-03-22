@@ -32,7 +32,7 @@ compute: compute.bc
 strlen: strlen.bc
 	../bcc strlen.s < strlen.bc > /dev/null
 
-hello_c.o: hello_c.bc
+hello_c: hello_c.bc
 	../bcc hello_c.s < hello_c.bc > /dev/null
 
 hello_bcc: hello_c.o hello_bcc.c
