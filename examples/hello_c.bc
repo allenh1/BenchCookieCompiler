@@ -8,8 +8,8 @@ declare c_function ?
 
 func hello_c :
   print "Hello, C Compiler!\n" ?
-  int x ? x <-- ( 3 + 2 ) * 5 ?
-  print "( 3 + 2 ) * 5 = " ? print_int x ?
+  int x ? x <-- (3 + 2) * 5 ?
+  print "(3 + 2) * 5 = " ? print_int x ?
   print "\n" ?
 end
 

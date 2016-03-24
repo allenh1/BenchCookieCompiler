@@ -4,8 +4,6 @@
 #include <iostream>
 #include "y.tab.h"
 
-// int yylineno = 1;
-
 static  void yyunput (int c, char * buf_ptr);
 
 void myunputc(int c) {
@@ -94,7 +92,7 @@ void myunputc(int c) {
 	return STRING_LITERALLY;
 }
 
-[^ ^|\t\n]*[^ ^|\t\n]*  {
+[^ ^|\t\n\[\]\(\)\+\-\*\/]*[^ ^|\t\n\[\]\(\)\+\-\*\/]*  {
     yylval.string_val = (char*) calloc(strlen(yytext) + 1, sizeof(char));
     strcpy(yylval.string_val, yytext);
     return WORD;
