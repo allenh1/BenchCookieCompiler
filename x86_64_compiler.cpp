@@ -32,11 +32,11 @@ void Command::doData(std::ostream & file)
 
   std::cout<<std::endl<<std::endl;;
 
-  file<<"\t.section .data"<<std::endl;
+  file<<std::endl<<"\t.section .data"<<std::endl;
   /** Place the integers. **/
 
   for (int x = 0; x < m_int_vars.size() - m_int_declarations.size(); ++x) {
-    file<<"I"<<x<<":\t.fill 64"<<std::endl;
+    file<<".I"<<x<<":\t.fill 64"<<std::endl;
   }
 }
 #define INTGR 67
@@ -68,7 +68,7 @@ void Command::evaluate_expression(std::ostream & file)
       stack_depth += 4;
       continue;
     } else if (aExpType == AN_INT) {
-      file<<"\tpushq "<<a.int_arg<<std::endl;
+      file<<"\tpushq $"<<a.int_arg<<std::endl;
       stack_depth += 4;
       arg_types.push(INTGR);
       continue;
@@ -76,18 +76,18 @@ void Command::evaluate_expression(std::ostream & file)
       arg_types.push(STRNG);
       ssize_t idx = m_exp_literals.front();
       m_exp_literals.pop();
-      file<<"\tpush S"<<idx<<std::endl;
+      file<<"\tpushq S"<<idx<<std::endl;
       // file<<"\tpush {%r1}"<<std::endl;
       stack_depth += 4;
       continue;
     } else if (aExpType == PTRDEREF) {
-      file<<"\tpop ebx"<<std::endl;
-      file<<"\tmov ebx, [ebx]"<<std::endl;
-      file<<"\tpush ebx"<<std::endl;
+      file<<"\tpopq %r8"<<std::endl;
+      file<<"\tmovq %r8, [%r8]"<<std::endl;
+      file<<"\tpushq %r8"<<std::endl;
       continue;
     } else if (aExpType == LOGNOT) {
-      file<<"\tpop %{r1}"<<std::endl;
-      file<<"\tmov %r0, $1"<<std::endl;
+      file<<"\tpopq %r9"<<std::endl;
+      file<<"\tmovq %rls, $1"<<std::endl;
       file<<"\tcmp %r1, $0"<<std::endl;
       file<<"\tbeq NSZ"<<nszcount<<std::endl;
       file<<"\tmov %r0, $0"<<nszcount<<std::endl;
@@ -98,7 +98,9 @@ void Command::evaluate_expression(std::ostream & file)
     }
     
     if (stack_depth >= 8) {
-      file<<"\tpop {%r1, %r2}"<<std::endl;
+      //file<<"\tpop {%r1, %r2}"<<std::endl;
+      file<<"\tpopq %r8"<<std::endl;
+      file<<"\tpopq %r9"<<std::endl;
       stack_depth -= 8;
     } else continue;
     switch (type) {
@@ -108,13 +110,13 @@ void Command::evaluate_expression(std::ostream & file)
        * You know, the stack_push((b=stack_pop(),a=stack_pop(),a+b))
        * kind of comma expresion.
        */
-      file<<"\tadd %r0, %r1, %r2"<<std::endl;
+      file<<"\taddq %r8, %r9"<<std::endl;
       goto do_default;
     case SUB:
-      file<<"\tsub %r0, %r2, %r1"<<std::endl;
+      file<<"\tsubq %r8, %r9"<<std::endl;
       goto do_default;
     case MUL:
-      file<<"\tmul %r0, %r1, %r2"<<std::endl;
+      file<<"\timul %r8, %r9"<<std::endl;
       goto do_default;
     case DIV:
       /* @todo case divide by zero */
@@ -331,10 +333,10 @@ void Command::evaluate_expression(std::ostream & file)
       std::cerr<<"Don't use things I didn't implement yet."<<std::endl;
       exit(101);
     do_default:
-      // if (eval.size()) {
-      file<<"\tpush {%r0}"<<std::endl;
-      stack_depth += 4;
-	// }
+      if (eval.size()) {
+	file<<"\tpushq %r9"<<std::endl;
+	stack_depth += 4;
+      }
       // else ;
     }
   }
@@ -346,10 +348,9 @@ void Command::push_variable(std::string var_name, std::stack<unsigned short> & v
   std::string varname = var_name;
   for (int x = 0; x < m_int_declarations.size(); ++x) {
     if (m_int_declarations[x] == varname) {
-      file<<"\tmov %r1, %r9"<<std::endl;
-      file<<"\tldr %r1, [%r9, #"<<4 * x<<"]"<<std::endl;
-      file<<"\tldr %r1, [%r1]"<<std::endl;
-      file<<"\tpush {%r1}"<<std::endl;
+      file<<"\tmovq "<<4*x<<"($.locals), %r9"<<std::endl;
+      // file<<"\tmovq (%r9), %r9"<<std::endl;
+      file<<"\tpushq (%r9)"<<std::endl;
       vartype.push(INTGR);
       return;
     }
@@ -357,9 +358,10 @@ void Command::push_variable(std::string var_name, std::stack<unsigned short> & v
     
   for (int x = 0; x < m_int_vars.size(); ++x) {
     if (m_int_vars[x] == varname) {
-      file<<"\tldr %r1, =I"<<x<<std::endl;
-      file<<"\tldr %r1, [%r1]"<<std::endl;
-      file<<"\tpush {%r1}"<<std::endl;
+      //file<<"\tldr %r1, =I"<<x<<std::endl;
+      file<<"\tpushq (.I"<<x<<")"<<std::endl;
+      // file<<"\tldr %r1, [%r1]"<<std::endl;
+      // file<<"\tpush {%r1}"<<std::endl;
       vartype.push(INTGR);
       return;
     }
@@ -367,8 +369,8 @@ void Command::push_variable(std::string var_name, std::stack<unsigned short> & v
   
   for (int x = 0; x < m_string_vars.size(); ++x) {
     if (m_string_vars[x] == varname) {
-      file<<"\tldr %r1, =IS"<<x<<std::endl;
-      file<<"\tpush {%r1}"<<std::endl;
+      //file<<"\tldr %r1, =IS"<<x<<std::endl;
+      file<<"\tpushq $.IS"<<x<<std::endl;
       vartype.push(STRNG);
       return;
     }
@@ -463,9 +465,12 @@ void Command::doMain(std::ostream & file)
     } else if (m_execOrder[x] == cmd_type::END_IF) {
       file<<"END_IF"<<ifndex-1<<":"<<std::endl;
     } else if (m_execOrder[x] == cmd_type::READ_INT) {
-      file<<"\tldr %r0, =num_fmt"<<std::endl;
-      file<<"\tldr %r1, =I"<<intdex<<std::endl;
-      file<<"\tbl scanf"<<std::endl;
+      // file<<"\tldr %r0, =num_fmt"<<std::endl;
+      file<<"\tmovq $.num_fmt, %rdi"<<std::endl;
+      //file<<"\tldr %r1, =I"<<intdex<<std::endl;
+      file<<"\tmovq $.I"<<intdex<<", %rsi"<<std::endl;
+      file<<"\txor %rax, %rax"<<std::endl;
+      file<<"\tcall scanf"<<std::endl;
       file<<std::endl;
 
       ++intdex;
@@ -491,7 +496,7 @@ void Command::doMain(std::ostream & file)
       file<<"\tcall printf"<<std::endl<<std::endl;
       ++pstringdex;
     } else if (m_execOrder[x] == cmd_type::PRINT_NUM) {
-      file<<"\tmovq $.num_fmt, %rdi"<<std::endl;
+      file<<"\tmovl $.num_fmt, %eax"<<std::endl;
       for (y = 0; y < m_int_vars.size(); ++y) {
         if (m_int_vars[y] == m_print_ints[pintdex]) break;
       } if (y == m_int_vars.size()) {
@@ -505,9 +510,13 @@ void Command::doMain(std::ostream & file)
 	file<<"\tldr %r1, [%r1, #"<<4 * z<<"]"<<std::endl;
 	file<<"\tldr %r1, [%r1]"<<std::endl;
       } else {
-	file<<"\tldr %r1, =I"<<y<<std::endl;
-	file<<"\tldr %r1, [%r1]"<<std::endl;
-      } file<<"\tbl printf"<<std::endl;
+	//file<<"\tldr %r1, =I"<<y<<std::endl;
+	file<<"\tmovl .I"<<y<<", %esi"<<std::endl;
+	file<<"\tmovq %rax, %rdi"<<std::endl;
+	file<<"\txor %rax, %rax"<<std::endl;
+	// file<<"\tmovq (%rdi), %rsi"<<std::endl;
+	//file<<"\tldr %r1, [%r1]"<<std::endl;
+      } file<<"\tcall printf"<<std::endl;
       ++pintdex;
     } else if (m_execOrder[x] == cmd_type::PRINT_BOOL) {
       for (y = 0; y < m_bool_vars.size(); ++y) {
@@ -543,20 +552,17 @@ void Command::doMain(std::ostream & file)
 
       evaluate_expression(file);
 
-      file<<"\tpop {%r0}"<<std::endl;
+      //    file<<"\tpop {%r0}"<<std::endl;
    
       if (!on_stack) {
         int x;
        for (x = 0; x < m_int_vars.size(); ++x) {
         if (m_int_vars[x] == int_gets) break;
-       }
-	     file<<"\tldr %r3, =I"<<x<<std::endl;
+       } file<<"\tmovq %r9, .I"<<x<<std::endl;
       } else {
-	     file<<"\tmov %r3, %r9"<<std::endl;
-	     file<<"\tldr %r3, [%r3, #"<<*last_z * 4<<"]"<<std::endl;
-	     delete last_z;
+	file<<"\tmovq %r9, "<<*last_z * 4<<"($.locals)"<<std::endl;
+	delete last_z;
       }
-      file<<"\tstr %r0, [%r3]"<<std::endl;
       file<<std::endl; intassdex++;
     }
   }
