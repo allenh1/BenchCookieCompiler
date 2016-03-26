@@ -23,19 +23,18 @@ if operator = "*" ? then
 endif
 
 int zerotest ?
-zerotest <-- num2 != 0 ?
+zerotest <-- (num2 < 0) + (num2 > 0) ?
 int iszero ? iszero <-- num2 = 0 ?
 int notdividing ? int printit ? printit <-- 0 ?
 
-notdividing <-- operator != "/" ?
+notdividing <-- (operator = "/" ) = 0 ?
 
 if operator = "/" && num2 ? then
-  result <-- num1 / num2 ?
-  iszero <-- 0 ?
+  result <-- num1 * num2 ?
   printit <-- 1 ?
 endif
 
-if operator = "/" && iszero ? then
+if operator = "/" && (printit = 0) ? then
   print "Invalid input\n" ?
 endif
 

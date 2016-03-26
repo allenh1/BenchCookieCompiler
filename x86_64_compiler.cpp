@@ -55,7 +55,7 @@ void Command::evaluate_expression(std::ostream & file)
   std::stack<unsigned short> arg_types;
   ssize_t stack_depth = 0;
 
-  std::stack<math_expression> eval;// = *expr;
+  std::stack<math_expression> eval;
   for(; !expr->empty(); eval.push(expr->top()), expr->pop(), 1);
   std::stack<math_expression> curr;
  
@@ -82,7 +82,10 @@ void Command::evaluate_expression(std::ostream & file)
       continue;
     } else if (aExpType == PTRDEREF) {
       file<<"\tpopq %r8"<<std::endl;
-      file<<"\tpushq (%r8)"<<std::endl;
+      if (arg_types.top() == STRNG) {
+	file<<"\tmovq (%r8), %r8"<<std::endl;
+      } else file<<"\tmovq (%r8), %r8"<<std::endl;
+      file<<"\tpushq %r8"<<std::endl;
       continue;
     } else if (aExpType == LOGNOT) {
       file<<"\tpopq %r8"<<std::endl;
@@ -96,7 +99,6 @@ void Command::evaluate_expression(std::ostream & file)
     }
     
     if (stack_depth >= 8) {
-      //file<<"\tpop {%r1, %r2}"<<std::endl;
       file<<"\tpopq %r8"<<std::endl;
       file<<"\tpopq %r9"<<std::endl;
       stack_depth -= 8;
@@ -118,9 +120,24 @@ void Command::evaluate_expression(std::ostream & file)
       goto do_default;
     case DIV:
       /* @todo case divide by zero */
-      file<<"\txor %rdx, %rdx"<<std::endl;
-      file<<"\tmovq %r8, %rax"<<std::endl;
-      file<<"\tidiv %r9"<<std::endl;
+      file<<"\txor %rax, %rax"<<std::endl;
+      file<<"\txor %rbx, %rbx"<<std::endl;
+      file<<"\tmovq $1, %rbx"<<std::endl;
+      file<<"\tcmpq $0, %r8"<<std::endl;
+      file<<"\tjge NLZ1"<<divcount<<std::endl;
+      file<<"\timul $-1, %rbx"<<std::endl;
+      file<<"\timul $-1, %r8"<<std::endl;
+      file<<"NLZ1"<<divcount<<":\tcmpq $0, %r9"<<std::endl;
+      file<<"\tjge NLZ2"<<divcount<<std::endl;
+      file<<"\timul $-1, %rbx"<<std::endl;
+      file<<"\timul $-1, %r9"<<std::endl;
+      file<<"NLZ2"<<divcount<<":"<<std::endl;
+      file<<"DIV"<<divcount<<":\tcmpq %r8, %r9"<<std::endl;
+      file<<"\tjl EDIV"<<divcount<<std::endl;
+      file<<"\tsubq %r8, %r9"<<std::endl;
+      file<<"\taddq $1, %rax"<<std::endl;
+      file<<"\tjmp DIV"<<divcount<<std::endl;
+      file<<"EDIV"<<divcount++<<":\timul %rbx, %rax"<<std::endl;
       file<<"\tmovq %rax, %r9"<<std::endl;
       goto do_default;
     case MOD:
@@ -269,7 +286,7 @@ void Command::evaluate_expression(std::ostream & file)
       file<<"\tcmpq $0, %rbx"<<std::endl;
       file<<"\tjne NSZ"<<nszcount<<std::endl;
       file<<"\tmovq $0, %r9"<<std::endl;
-      file<<"NSZ"<<nszcount<<":";
+      file<<"NSZ"<<nszcount<<":"<<std::endl;
       nszcount++;
       goto do_default;
     case LOGXOR:
@@ -371,7 +388,7 @@ void Command::doMain(std::ostream & file)
        * @todo This causes a warning. That's not good.
        */
       file<<"\t/* Read line */"<<std::endl;
-      file<<"\tmovl $.IS, %edi"<<stringdex<<std::endl;
+      file<<"\tmovl $.IS"<<stringdex<<", %edi"<<std::endl;
       file<<"\txor %rax, %rax"<<std::endl;
       file<<"\tcall gets"<<std::endl;
       file<<std::endl;
@@ -402,7 +419,8 @@ void Command::doMain(std::ostream & file)
 	if (m_int_declarations[z] == var_name) break;
       } if (z < m_int_declarations.size()) {
 	file<<"FOR"<<forndex<<":";
-	file<<"\tmovq "<<4*z<<"(.locals), %r8"<<std::endl;
+	file<<"\tmovq $.locals, %r8"<<std::endl;
+	if (8*z) file<<"\taddq $"<<8*z<<", %r8"<<std::endl;
 	file<<"\tmovq (%r8), %r8"<<std::endl;
       } else if (y < m_int_vars.size()) {
 	file<<"FOR"<<forndex<<":";
@@ -413,10 +431,10 @@ void Command::doMain(std::ostream & file)
 	exit(7);
       }
 
-      file<<"\tcmp %r8, 0"<<std::endl;
+      file<<"\tcmpq $0, %r8"<<std::endl;
       file<<"\tje END_FOR"<<forndex<<std::endl;
     } else if (m_execOrder[x] == cmd_type::END_FOR) {
-      file<<"j FOR"<<forndex<<std::endl;
+      file<<"jmp FOR"<<forndex<<std::endl;
       file<<"END_FOR"<<forndex++<<":"<<std::endl;
     } else if (m_execOrder[x] == cmd_type::END_IF) {
       file<<"END_IF"<<ifndex-1<<":"<<std::endl;
@@ -463,7 +481,7 @@ void Command::doMain(std::ostream & file)
 	if (m_print_ints[pintdex] == m_int_declarations[z]) break;
       } if (z != m_int_declarations.size()) {
 	file<<"\tmovq $.locals, %r10"<<std::endl;
-	if (4 * z) file<<"\taddq $"<<8 * z<<", %r10"<<std::endl;
+	if (8 * z) file<<"\taddq $"<<8 * z<<", %r10"<<std::endl;
 	file<<"\tmovq (%r10), %rbx"<<std::endl;
 	file<<"\tmovq %rbx, %rsi"<<std::endl;
 	file<<"\tmovq %rax, %rdi"<<std::endl;
@@ -559,6 +577,8 @@ void Command::writeAssembly()
    *       and search for last usage?
    */
   file<<"\t/* Free local vars */"<<std::endl;
+  file<<"\tmovq $0, %rbx"<<std::endl;
+  file<<"\tmovq %rbx, %rcx"<<std::endl;
   for (int x = 0; x < m_int_declarations.size(); ++x) {
     file<<"\tmovq $.locals, %rax"<<std::endl;
     if (8 * x) file<<"\taddq $"<<8 * x<<", %rax"<<std::endl;
