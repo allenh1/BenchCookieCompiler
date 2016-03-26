@@ -8,22 +8,17 @@ int please? > num2
 ; We do these because we want to be sure
 ; that they are doing division later.
 
-int pluseq ? pluseq <-- operator = "+" ?
-int subteq ? subteq <-- operator = "-" ?
-int multeq ? multeq <-- operator = "*" ?
-int divdeq ? divdeq <-- operator = "/" ?
-
 int result ? @ This is where we will store the answer
 
-if pluseq ? then
+if operator = "+" ? then
   result <-- num1 + num2 ?
 endif
 
-if subteq ? then
+if operator = "-" ? then
   result <-- num1 - num2 ?
 endif
 
-if multeq ? then
+if operator = "*" ? then
   result <-- num1 * num2 ?
 endif
 
@@ -32,15 +27,15 @@ zerotest <-- num2 != 0 ?
 int iszero ? iszero <-- num2 = 0 ?
 int notdividing ? int printit ? printit <-- 0 ?
 
-notdividing <-- pluseq || subteq || multeq ?
+notdividing <-- operator != "/" ?
 
-if divdeq && num2 ? then
+if operator = "/" && num2 ? then
   result <-- num1 / num2 ?
   iszero <-- 0 ?
   printit <-- 1 ?
 endif
 
-if divdeq && iszero ? then
+if operator = "/" && iszero ? then
   print "Invalid input\n" ?
 endif
 
