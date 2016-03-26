@@ -10,10 +10,16 @@ void Command::addPrintInt(char * _int)
 { m_print_ints.push_back(std::string(_int)); m_execOrder.push_back(cmd_type::PRINT_NUM); }
 
 void Command::addPrintString(char * arg)
-{ m_print_strings.push_back(std::string(arg)); m_execOrder.push_back(cmd_type::PRINT_STR); }
+{
+  m_print_strings.push_back(std::string(arg));
+  m_execOrder.push_back(cmd_type::PRINT_STR);
+}
 
 void Command::addPrintLiteral(char * arg)
-{      m_literals.push_back(std::string(arg)); m_execOrder.push_back(cmd_type::PRINT); }
+{
+  m_literals.push_back(std::string(arg));
+  m_execOrder.push_back(cmd_type::PRINT);
+}
 
 void Command::addLiteral(char * arg)
 { m_literals.push_back(std::string(arg)); m_execOrder.push_back(cmd_type::NOPRINT); }
