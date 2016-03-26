@@ -113,8 +113,7 @@ void Command::evaluate_expression(std::ostream & file)
       file<<"\taddq %r8, %r9"<<std::endl;
       goto do_default;
     case SUB:
-      file<<"\tsubq %r9, %r8"<<std::endl;
-      file<<"\tmovq %r8, %r9"<<std::endl;
+      file<<"\tsubq %r8, %r9"<<std::endl;
       goto do_default;
     case MUL:
       file<<"\timul %r8, %r9"<<std::endl;
@@ -164,7 +163,7 @@ void Command::evaluate_expression(std::ostream & file)
 	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
       } else {
 	file<<"\tmovq $1, %rax"<<std::endl;
-	file<<"\tcmp %r8, %r9"<<std::endl;
+	file<<"\tcmpq %r8, %r9"<<std::endl;
 	file<<"\tjg GT"<<nszcount<<std::endl;
 	file<<"\txor %rax, %rax"<<std::endl;
 	file<<"GT"<<nszcount<<":\tmovq %rax, %r9"<<std::endl;
@@ -188,7 +187,7 @@ void Command::evaluate_expression(std::ostream & file)
 	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
       } else {
 	file<<"\tmovq $1, %rax"<<std::endl;
-	file<<"\tcmp %r8, %r9"<<std::endl;
+	file<<"\tcmpq %r8, %r9"<<std::endl;
 	file<<"\tjge GEQ"<<nszcount<<std::endl;
 	file<<"\txor %rax, %rax"<<std::endl;
 	file<<"GEQ"<<nszcount<<":\tmovq %rax, %r9"<<std::endl;	file<<"\tmov %r0, $1"<<std::endl;
@@ -212,7 +211,7 @@ void Command::evaluate_expression(std::ostream & file)
 	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
       } else {
 	file<<"\tmovq $1, %rax"<<std::endl;
-	file<<"\tcmp %r8, %r9"<<std::endl;
+	file<<"\tcmpq %r8, %r9"<<std::endl;
 	file<<"\tjl LT"<<nszcount<<std::endl;
 	file<<"\txor %rax, %rax"<<std::endl;
 	file<<"LT"<<nszcount<<":\tmovq %rax, %r9"<<std::endl;
@@ -238,7 +237,7 @@ void Command::evaluate_expression(std::ostream & file)
 	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
       } else {
 	file<<"\tmovq $1, %rax"<<std::endl;
-	file<<"\tcmp %r8, %r9"<<std::endl;
+	file<<"\tcmpq %r8, %r9"<<std::endl;
 	file<<"\tjle LE"<<nszcount<<std::endl;
 	file<<"\txor %rax, %rax"<<std::endl;
 	file<<"LE"<<nszcount<<":\tmovq %rax, %r9"<<std::endl;
@@ -262,7 +261,7 @@ void Command::evaluate_expression(std::ostream & file)
 	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
       } else {
 	file<<"\tmovq $1, %rax"<<std::endl;
-	file<<"\tcmp %r8, %r9"<<std::endl;
+	file<<"\tcmpq %r8, %r9"<<std::endl;
 	file<<"\tje EQ"<<nszcount<<std::endl;
 	file<<"\txor %rax, %rax"<<std::endl;
 	file<<"EQ"<<nszcount<<":\tmovq %rax, %r9"<<std::endl;
@@ -286,7 +285,7 @@ void Command::evaluate_expression(std::ostream & file)
 	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
       } else {
 	file<<"\tmovq $1, %rax"<<std::endl;
-	file<<"\tcmp %r8, %r9"<<std::endl;
+	file<<"\tcmpq %r8, %r9"<<std::endl;
 	file<<"\tjne NE"<<nszcount<<std::endl;
 	file<<"\txor %rax, %rax"<<std::endl;
 	file<<"NE"<<nszcount<<": movq %rax, %r9"<<std::endl;
@@ -306,7 +305,7 @@ void Command::evaluate_expression(std::ostream & file)
     case LOGOR:
       file<<"\tadd %r1, %r1, %r2"<<std::endl;
       file<<"\tmov %r0, $1"<<std::endl;
-      file<<"\tcmp %r1, $0"<<std::endl;
+      file<<"\tcmpq %r1, $0"<<std::endl;
       file<<"\tbne NSZ"<<nszcount<<std::endl;
       file<<"\tmov %r0, $0"<<std::endl;
       file<<"NSZ"<<nszcount<<": @ label used to set as true"<<std::endl;
@@ -350,7 +349,6 @@ void Command::push_variable(std::string var_name, std::stack<unsigned short> & v
   for (int x = 0; x < m_int_declarations.size(); ++x) {
     if (m_int_declarations[x] == varname) {
       file<<"\tmovq "<<4*x<<"($.locals), %r9"<<std::endl;
-      // file<<"\tmovq (%r9), %r9"<<std::endl;
       file<<"\tpushq (%r9)"<<std::endl;
       vartype.push(INTGR);
       return;
@@ -359,10 +357,7 @@ void Command::push_variable(std::string var_name, std::stack<unsigned short> & v
     
   for (int x = 0; x < m_int_vars.size(); ++x) {
     if (m_int_vars[x] == varname) {
-      //file<<"\tldr %r1, =I"<<x<<std::endl;
       file<<"\tpushq (.I"<<x<<")"<<std::endl;
-      // file<<"\tldr %r1, [%r1]"<<std::endl;
-      // file<<"\tpush {%r1}"<<std::endl;
       vartype.push(INTGR);
       return;
     }
@@ -370,7 +365,6 @@ void Command::push_variable(std::string var_name, std::stack<unsigned short> & v
   
   for (int x = 0; x < m_string_vars.size(); ++x) {
     if (m_string_vars[x] == varname) {
-      //file<<"\tldr %r1, =IS"<<x<<std::endl;
       file<<"\tpushq $.IS"<<x<<std::endl;
       vartype.push(STRNG);
       return;
@@ -433,7 +427,6 @@ void Command::doMain(std::ostream & file)
     } else if (m_execOrder[x] == cmd_type::BEGIN_IF) {
       // find the variable we depend on!
       evaluate_expression(file);
-      // file<<"\tpopq %r8"<<std::endl;
       file<<"IF"<<ifndex<<":\tcmpq $0, %r9"<<std::endl;
       file<<"\tje END_IF"<<ifndex<<std::endl;
       ++ifndex;
@@ -446,15 +439,11 @@ void Command::doMain(std::ostream & file)
 	if (m_int_declarations[z] == var_name) break;
       } if (z < m_int_declarations.size()) {
 	file<<"FOR"<<forndex<<":";
-	//file<<"\tmov %r8, %r9"<<std::endl;
-	//file<<"\tldr %r8, [%r8, #"<<4 * z<<"]"<<std::endl;
-	//file<<"\tldr %r8, [%r8]"<<std::endl;
 	file<<"\tmovq "<<4*z<<"(.locals), %r8"<<std::endl;
 	file<<"\tmovq (%r8), %r8"<<std::endl;
       } else if (y < m_int_vars.size()) {
 	file<<"FOR"<<forndex<<":";
 	file<<"\tmovq .I"<<y<<", %r8"<<std::endl;
-	// file<<"\tldr %r8, [%r8]"<<std::endl;
       } else {
 	std::cerr<<"Error: for-dependent variable "<<var_name;
 	std::cerr<<" not yet declared!"<<std::endl;
@@ -510,23 +499,16 @@ void Command::doMain(std::ostream & file)
       for (z = 0; z < m_int_declarations.size(); ++z) {
 	if (m_print_ints[pintdex] == m_int_declarations[z]) break;
       } if (z != m_int_declarations.size()) {
-	// file<<"\tldr %r1, =locals"<<std::endl;
 	file<<"\tmovq $.locals, %r10"<<std::endl;
 	if (4 * z) file<<"\taddq $"<<4 * z<<", %r10"<<std::endl;
-	//file<<"\tldr %r1, [%r1, #"<<4 * z<<"]"<<std::endl;
-	//file<<"\tldr %r1, [%r1]"<<std::endl;
 	file<<"\tmovq (%r10), %rbx"<<std::endl;
-	file<<"\tmovq (%rbx), %rbx"<<std::endl;
 	file<<"\tmovq %rbx, %rsi"<<std::endl;
 	file<<"\tmovq %rax, %rdi"<<std::endl;
 	file<<"\txor %rax, %rax"<<std::endl;
       } else {
-	//file<<"\tldr %r1, =I"<<y<<std::endl;
 	file<<"\tmovl .I"<<y<<", %esi"<<std::endl;
 	file<<"\tmovq %rax, %rdi"<<std::endl;
 	file<<"\txor %rax, %rax"<<std::endl;
-	// file<<"\tmovq (%rdi), %rsi"<<std::endl;
-	//file<<"\tldr %r1, [%r1]"<<std::endl;
       } file<<"\tcall printf"<<std::endl;
       ++pintdex;
     } else if (m_execOrder[x] == cmd_type::PRINT_BOOL) {
@@ -563,8 +545,6 @@ void Command::doMain(std::ostream & file)
 
       evaluate_expression(file);
 
-      //    file<<"\tpop {%r0}"<<std::endl;
-   
       if (!on_stack) {
         int x;
        for (x = 0; x < m_int_vars.size(); ++x) {
@@ -573,7 +553,7 @@ void Command::doMain(std::ostream & file)
       } else {
 	file<<"\tmovq $.locals, %r10"<<std::endl;
 	if (*last_z) file<<"\taddq "<<*last_z * 4<<", %r10"<<std::endl;
-	file<<"\tmovq %r9, %r10"<<std::endl;
+	file<<"\tmovq %r9, (%r10)"<<std::endl;
 	delete last_z;
       }
       file<<std::endl; intassdex++;
@@ -592,7 +572,7 @@ void Command::writeAssembly()
   file <<"/**"<<std::endl;
   file <<" * "<<m_filename<<std::endl;
   file <<" *"<<std::endl;
-  file <<" * Generated by Bench Cookie Compiler!"<<std::endl;
+  file <<" * Generated by Bench Cookie Compiler for x86_64!"<<std::endl;
   file <<" * Bench Cookie is... Experimental. Don't be mad."<<std::endl;
   file <<" */"<<std::endl;
 
@@ -605,10 +585,7 @@ void Command::writeAssembly()
   file<<std::endl<<std::endl;
   file<<"\t.text"<<std::endl;
   if (!m_is_c_callable) file<<"\t.globl main"<<std::endl;
-  file<<"\t.globl printf"<<std::endl;
-  file<<"\t.globl scanf"<<std::endl;
-  file<<"\t.globl malloc"<<std::endl;
-  if (m_is_c_callable) file<<"\texport "<<m_function_name<<std::endl;
+   if (m_is_c_callable) file<<"\texport "<<m_function_name<<std::endl;
   doMain(file);
 
   /**
