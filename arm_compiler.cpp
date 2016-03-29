@@ -331,11 +331,8 @@ void Command::evaluate_expression(std::ostream & file)
       std::cerr<<"Don't use things I didn't implement yet."<<std::endl;
       exit(101);
     do_default:
-      if (eval.size()) {
-	file<<"\tpush {%r0}"<<std::endl;
-	stack_depth += 4;
-      }
-      
+      file<<"\tpush {%r0}"<<std::endl;
+      stack_depth += 4;
     }
   }
 }
@@ -427,7 +424,7 @@ void Command::doMain(std::ostream & file)
     } else if (m_execOrder[x] == cmd_type::BEGIN_IF) {
       // find the variable we depend on!
       evaluate_expression(file);
-      // file<<"\tpop {%r0}"<<std::endl;
+      file<<"\tpop {%r0}"<<std::endl;
       file<<"IF"<<ifndex<<":\tcmp %r0, $0"<<std::endl;
       file<<"\tbeq END_IF"<<ifndex<<std::endl;
       ++ifndex;
@@ -537,7 +534,7 @@ void Command::doMain(std::ostream & file)
 
       evaluate_expression(file);
 
-      //file<<"\tpop {%r0}"<<std::endl;
+      file<<"\tpop {%r0}"<<std::endl;
    
       if (!on_stack) {
         int x;

@@ -79,7 +79,6 @@ func (arg1, arg2, ...) picker = [
 ```
 
 SO, you make the bench cookie version of a struct like this:
-```
 func bc_structure (arg1, arg2, ...) [
   captured int x ? x <-- arg1
   captured int y ? y <-- arg2
@@ -87,7 +86,7 @@ func bc_structure (arg1, arg2, ...) [
 
   ; This is a constructor!
 ]
-```
+
 Comments:
 ---------
 ```

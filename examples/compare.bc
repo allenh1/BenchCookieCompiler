@@ -1,4 +1,4 @@
-print "Enter the fist number: " ?
+print "Enter the first number: " ?
 int please? > num1
 print "Enter the second number: " ?
 int please? > num2
