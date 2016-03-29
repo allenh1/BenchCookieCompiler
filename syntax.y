@@ -13,14 +13,11 @@
 
 %nonassoc IF ELSE THEN ENDIF FOR DO ENDFOR ELIF
 
-%left PLUS MINUS LOR LESSEQ LXOR XOR NOTEQUALS
-%left TIMES DIVIDE TOOGREAT TOOLESS
-%left OR GREATEQ 
-%left OPAREN EPAREN
+%left DIVIDE TIMES MINUS PLUS TOOLESS TOOGREAT
+%left LESSEQ LESS GREATEQ GREAT EQUALS NOTEQUALS
+%left AND XOR OR LAND LXOR LOR GETS
 
-%left BINARY
-%right GETS NOT TWIDLE
-%right UNARY
+%right OPAREN EPAREN DEREF TWIDLE NOT
 
 %union	{
 	char * string_val;
@@ -146,8 +143,6 @@ exp:
     | exp DIVIDE exp { Command::cmd.addToExpressionStack(strdup("/")); }
     | NOT exp { Command::cmd.addToExpressionStack(strdup("!")); }
     | TWIDLE exp { Command::cmd.addToExpressionStack(strdup("~")); }
-    | PLUS exp { Command::cmd.addToExpressionStack(strdup("u+")); }
-    | MINUS exp { Command::cmd.addToExpressionStack(strdup("u-")); }
     | DEREF exp { Command::cmd.addToExpressionStack(strdup("deref")); }
     | OPAREN exp EPAREN { }
     ;
@@ -169,7 +164,7 @@ returns:
     ;
 
 function:
-      FUNC WORD '(' arglist ')' COLON {
+      FUNC WORD OPAREN arglist EPAREN COLON {
 	Command::cmd.startFunctionBody($2);
       }
       | FUNC WORD COLON { Command::cmd.setFunctionName($2); }

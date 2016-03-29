@@ -30,11 +30,11 @@ int notdividing ? int printit ? printit <-- 0 ?
 notdividing <-- (operator = "/" ) = 0 ?
 
 if operator = "/" && num2 ? then
-  result <-- num1 * num2 ?
+  result <-- num1 / num2 ?
   printit <-- 1 ?
 endif
 
-if operator = "/" && (printit = 0) ? then
+if (operator = "/") && (printit = 0) ? then
   print "Invalid input\n" ?
 endif
 
