@@ -24,4 +24,4 @@ install:
 	cp ./bcc /usr/bin/bcc
 
 clean:
-	rm -f lex.yy.c y.tab.c y.tab.h bcc *.o *~
+	rm -f lex.yy.c y.tab.c y.tab.h bcc *.o *~ y.output

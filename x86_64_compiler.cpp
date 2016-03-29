@@ -253,8 +253,8 @@ void Command::evaluate_expression(std::ostream & file)
       t1 = arg_types.top(); arg_types.pop();
       t2 = STRNG;// arg_types.top(); arg_types.pop();
       if (t1 == STRNG && t2 == STRNG) {
-	file<<"\tmov %r8, %rdi"<<std::endl;
-	file<<"\tmov %r9, %rsi"<<std::endl;
+	file<<"\tmovq %r8, %rdi"<<std::endl;
+	file<<"\tmovq %r9, %rsi"<<std::endl;
 	file<<"\tcall strcmp"<<std::endl;
 	file<<"\tmovq $1, %r9"<<std::endl;
 	file<<"\tcmpq $0, %rax"<<std::endl;
@@ -566,7 +566,7 @@ void Command::writeAssembly()
   file<<std::endl<<std::endl;
   file<<"\t.text"<<std::endl;
   if (!m_is_c_callable) file<<"\t.globl main"<<std::endl;
-   if (m_is_c_callable) file<<"\texport "<<m_function_name<<std::endl;
+   if (m_is_c_callable) file<<"\t.globl "<<m_function_name<<std::endl;
   doMain(file);
 
   /**
@@ -609,7 +609,6 @@ void Command::writeAssembly()
       /**
        * Load the values into r0, r1, r2, r3 as necessary.
        */
-      file<<"\tmov %r9, =locals"<<std::endl;
       for (int x = 0; x < m_current_returns.size(); ++x) {
 	int y, z;
 	for (y = 0; y < m_int_vars.size(); ++y) {
@@ -621,18 +620,18 @@ void Command::writeAssembly()
           } for (z = 0; z < m_int_declarations.size(); ++z) {
 	    if (m_int_declarations[z] == m_int_vars[y]) break;
 	  } if (z != m_int_declarations.size()) {
-	    file<<"\tmov %r6, %r9"<<std::endl;
-	    file<<"\tldr %r6, [%r9, #"<<4 * z<<"]"<<std::endl;
-	    file<<"\tldr %r6, [%r6]"<<std::endl;
-	  } else {
-	    file<<"\tldr %r6, =I"<<y<<std::endl;
-	    file<<"\tldr %r6, [%r6]"<<std::endl;
-	  }
-	  file<<"\tmov %r"<<x<<", %r6"<<std::endl;
+	    file<<"\tmovq $.locals, %r8"<<std::endl;
+	    if (z) file<<"\taddq $"<<4 * z<<", %r8"<<std::endl;
+	    file<<"\tmovq (%r8), %r8"<<std::endl;
+	} else {
+	  file<<"\tmovq .I"<<y<<", %r8"<<std::endl;
+	} char d = 'a';
+	file<<"\tmov %r"<<&(d)<<"x, %r6"<<std::endl;
+	++d;
       }
     }
-    file<<"\tbx lr"<<std::endl;
-    file<<"\t.end"<<std::endl;
+    file<<"\tret"<<std::endl;
+    file<<"\tleave"<<std::endl;
   }
 }// allocate enough space for drew-sized strings.
 #endif
