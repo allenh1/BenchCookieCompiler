@@ -34,7 +34,7 @@ if operator = "/" && num2 ? then
   printit <-- 1 ?
 endif
 
-if (operator = "/") && (printit = 0) ? then
+if operator = "/" && printit = 0 ? then
   print "Invalid input\n" ?
 endif
 
