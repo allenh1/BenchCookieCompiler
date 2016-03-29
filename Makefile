@@ -2,7 +2,7 @@ cc = gcc -g
 CC = g++ --std=c++14 -g
 
 LEX=lex
-YACC=yacc -v -g
+YACC=yacc -g
 
 all: bcc
 
