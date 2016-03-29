@@ -87,11 +87,9 @@ void Command::evaluate_expression(std::ostream & file)
       continue;
     } else if (aExpType == LOGNOT) {
       file<<"\tpop %{r1}"<<std::endl;
-      file<<"\tmov %r0, $1"<<std::endl;
       file<<"\tcmp %r1, $0"<<std::endl;
-      file<<"\tbeq NSZ"<<nszcount<<std::endl;
-      file<<"\tmov %r0, $0"<<nszcount<<std::endl;
-      file<<"NSZ"<<nszcount<<":"<<std::endl;
+      file<<"\tmoveq %r0, $0"<<std::endl;
+      file<<"\tmovneq %r0, $1"<<std::endl;
       file<<"\tpush {%r0}"<<std::endl;
       ++nszcount;
       continue;
@@ -118,26 +116,23 @@ void Command::evaluate_expression(std::ostream & file)
       goto do_default;
     case DIV:
       /* @todo case divide by zero */
-      file<<"\tmov %r0, $0"<<std::endl<<std::endl;
-      file<<"\tcmp %r1, $0"<<std::endl;
+      // Do we need to move 0 into r0? commenting
+      // out for now.
+      file<<"\teor %r0, %r0, %r0"<<std::endl;
       file<<"\tmov %r5, $1"<<std::endl;
-      file<<"\tbge NLZ1"<<divcount<<std::endl;
       file<<"\tmov %r3, #-1"<<std::endl;
-      file<<"\tmul %r5, %r5, %r3"<<std::endl;
-      file<<"\tmul %r1, %r1, %r3"<<std::endl;
-      file<<"NLZ1"<<divcount<<":"<<std::endl;
+      file<<"\tcmp %r1, $0"<<std::endl;
+      file<<"\tmulle %r5, %r5, %r3"<<std::endl;
+      file<<"\tmulle %r1, %r1, %r3"<<std::endl;
       file<<"\tcmp %r2, $0"<<std::endl;
-      file<<"\tbge NLZ2"<<divcount<<std::endl;
-      file<<"\tmov %r3, #-1"<<std::endl;
-      file<<"\tmul %r5, %r3, %r5"<<std::endl;
-      file<<"\tmul %r2, %r3, %r2"<<std::endl;
-      file<<"NLZ2"<<divcount<<":"<<std::endl;
-      file<<"DIVIDE"<<divcount++<<": cmp %r1, %r2"<<std::endl;
-      file<<"\t bgt DONEDIVIDE"<<divcount-1<<std::endl;
-      file<<"\t sub %r2, %r2, %r1"<<std::endl;
-      file<<"\t add %r0, $1"<<std::endl;
-      file<<"\t b DIVIDE"<<divcount-1<<std::endl;
-      file<<"DONEDIVIDE"<<divcount-1<<":"<<std::endl;
+      file<<"\tmulle %r5, %r3, %r5"<<std::endl;
+      file<<"\tmulle %r2, %r3, %r2"<<std::endl;
+      file<<"DIV"<<divcount++<<":\tcmp %r1, %r2"<<std::endl;
+      file<<"\tbgt DDIV"<<divcount-1<<std::endl;
+      file<<"\tsub %r2, %r2, %r1"<<std::endl;
+      file<<"\tadd %r0, $1"<<std::endl;
+      file<<"\tb DIV"<<divcount-1<<std::endl;
+      file<<"DDIV"<<divcount-1<<":";
       file<<"\tmul %r0, %r0, %r5"<<std::endl;
       goto do_default;
     case MOD:
@@ -151,20 +146,13 @@ void Command::evaluate_expression(std::ostream & file)
 	file<<"\tmov %r0, %r1"<<std::endl;
 	file<<"\tmov %r1, %r2"<<std::endl;
 	file<<"\tbl strcmp"<<std::endl;
-	file<<"\tpush {%r0}"<<std::endl;
-	file<<"\tmov %r0, $1"<<std::endl;
-	file<<"\tpop {%r1}"<<std::endl;
-	file<<"\tmov %r2, #-1"<<std::endl;
-	file<<"\tcmp %r2, %r1"<<std::endl;
-	file<<"\tbeq NOSETZERO"<<nszcount<<std::endl;
-	file<<"\tmov %r0, $0"<<std::endl;
-	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+	file<<"\tcmp %r0, $0"<<std::endl;
+	file<<"\tmovgt %r0, $1"<<std::endl;
+	file<<"\tmovle %r0, $0"<<std::endl;
       } else {
-	file<<"\tmov %r0, $1"<<std::endl;
 	file<<"\tcmp %r2, %r1"<<std::endl;
-	file<<"\tbgt NOSETZERO"<<nszcount<<std::endl;
-	file<<"\tmov %r0, $0"<<std::endl;
-	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+	file<<"\tmovgt %r0, $1"<<std::endl;
+	file<<"\tmovle %r0, $0"<<std::endl;
       }
       nszcount++;
       goto do_default;
@@ -175,20 +163,13 @@ void Command::evaluate_expression(std::ostream & file)
 	file<<"\tmov %r0, %r1"<<std::endl;
 	file<<"\tmov %r1, %r2"<<std::endl;
 	file<<"\tbl strcmp"<<std::endl;
-	file<<"\tpush {%r0}"<<std::endl;
-	file<<"\tmov %r0, $1"<<std::endl;
-	file<<"\tpop {%r1}"<<std::endl;
-	file<<"\tmov %r2, #-1"<<std::endl;
-	file<<"\tcmp %r2, %r1"<<std::endl;
-	file<<"\tbeq NOSETZERO"<<nszcount<<std::endl;
-	file<<"\tmov %r0, $0"<<std::endl;
-	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+	file<<"\tcmp %r0, $0"<<std::endl;
+	file<<"\tmovge %r0, $1"<<std::endl;
+	file<<"\tmovlt %r0, $0"<<std::endl;
       } else {
-	file<<"\tmov %r0, $1"<<std::endl;
 	file<<"\tcmp %r2, %r1"<<std::endl;
-	file<<"\tbge NOSETZERO"<<nszcount<<std::endl;
-	file<<"\tmov %r0, $0"<<std::endl;
-	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+	file<<"\tmovge %r0, $1"<<std::endl;
+	file<<"\tmovle %r0, $0"<<std::endl;
       }
       nszcount++;
       goto do_default;
@@ -199,20 +180,13 @@ void Command::evaluate_expression(std::ostream & file)
 	file<<"\tmov %r0, %r1"<<std::endl;
 	file<<"\tmov %r1, %r2"<<std::endl;
 	file<<"\tbl strcmp"<<std::endl;
-	file<<"\tpush {%r0}"<<std::endl;
-	file<<"\tmov %r0, $1"<<std::endl;
-	file<<"\tpop {%r1}"<<std::endl;
-	file<<"\tmov %r2, #-1"<<std::endl;
-	file<<"\tcmp %r2, %r1"<<std::endl;
-	file<<"\tbeq NOSETZERO"<<nszcount<<std::endl;
-	file<<"\tmov %r0, $0"<<std::endl;
-	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+	file<<"\tcmp %r0, $0"<<std::endl;
+	file<<"\tmovlt %r0, $1"<<std::endl;
+	file<<"\tmovge %r0, $0"<<std::endl;
       } else {
-	file<<"\tmov %r0, $1"<<std::endl;
 	file<<"\tcmp %r2, %r1"<<std::endl;
-	file<<"\tblt NOSETZERO"<<nszcount<<std::endl;
-	file<<"\tmov %r0, $0"<<std::endl;
-	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+	file<<"\tmovlt %r0, $1"<<std::endl;
+	file<<"\tmovge %r0, $0"<<std::endl;
       }
       nszcount++;
       goto do_default;
@@ -223,22 +197,13 @@ void Command::evaluate_expression(std::ostream & file)
 	file<<"\tmov %r0, %r1"<<std::endl;
 	file<<"\tmov %r1, %r2"<<std::endl;
 	file<<"\tbl strcmp"<<std::endl;
-	file<<"\tpush {%r0}"<<std::endl;
-	file<<"\tmov %r0, $1"<<std::endl;
-	file<<"\tpop {%r1}"<<std::endl;
-	file<<"\tmov %r2, #-1"<<std::endl;
-	file<<"\tcmp %r2, %r1"<<std::endl;
-	file<<"\tbeq NOSETZERO"<<nszcount<<std::endl;
-	file<<"\tmov %r2, %r1"<<std::endl;
-	file<<"\tbeq NOSETZERO"<<nszcount<<std::endl;
-	file<<"\tmov %r0, $0"<<std::endl;
-	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+	file<<"\tcmp %r0, $0"<<std::endl;
+	file<<"\tmovle %r0, $1"<<std::endl;
+	file<<"\tmovgt %r0, $0"<<std::endl;
       } else {
-	file<<"\tmov %r0, $1"<<std::endl;
-	file<<"\tcmp %r2, %r1"<<std::endl;
-	file<<"\tble NOSETZERO"<<nszcount<<std::endl;
-	file<<"\tmov %r0, $0"<<std::endl;
-	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+	file<<"\tcmp %r1, %r2"<<std::endl;
+	file<<"\tmovle %r0, $1"<<std::endl;
+	file<<"\tmovgt %r0, $0"<<std::endl;
       }
       nszcount++;
       goto do_default;
@@ -249,20 +214,13 @@ void Command::evaluate_expression(std::ostream & file)
 	file<<"\tmov %r0, %r1"<<std::endl;
 	file<<"\tmov %r1, %r2"<<std::endl;
 	file<<"\tbl strcmp"<<std::endl;
-	file<<"\tpush {%r0}"<<std::endl;
-	file<<"\tmov %r0, $1"<<std::endl;
-	file<<"\tpop {%r1}"<<std::endl;
-	file<<"\tmov %r2, $0"<<std::endl;
-	file<<"\tcmp %r2, %r1"<<std::endl;
-	file<<"\tbeq NOSETZERO"<<nszcount<<std::endl;
-	file<<"\tmov %r0, $0"<<std::endl;
-	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+	file<<"\tcmp %r0, $0"<<std::endl;
+	file<<"\tmoveq %r0, $1"<<std::endl;
+	file<<"\tmovne %r0, $0"<<std::endl;
       } else {
-	file<<"\tmov %r0, $1"<<std::endl;
-	file<<"\tcmp %r2, %r1"<<std::endl;
-	file<<"\tbeq NOSETZERO"<<nszcount<<std::endl;
-	file<<"\tmov %r0, $0"<<std::endl;
-	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+	file<<"\tcmp %r1, %r2"<<std::endl;
+	file<<"\tmoveq %r0, $1"<<std::endl;
+	file<<"\tmovne %r0, $0"<<std::endl;
       }
       nszcount++;
       goto do_default;
@@ -273,32 +231,26 @@ void Command::evaluate_expression(std::ostream & file)
 	file<<"\tmov %r0, %r1"<<std::endl;
 	file<<"\tmov %r1, %r2"<<std::endl;
 	file<<"\tbl strcmp"<<std::endl;
-	file<<"\tpush {%r0}"<<std::endl;
-	file<<"\tmov %r0, $1"<<std::endl;
-	file<<"\tpop {%r1}"<<std::endl;
-	file<<"\tmov %r2, $0"<<std::endl;
-	file<<"\tcmp %r2, %r1"<<std::endl;
-	file<<"\tbne NOSETZERO"<<nszcount<<std::endl;
-	file<<"\tmov %r0, $0"<<std::endl;
-	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
-      } else {
-	file<<"\tmov %r0, $1"<<std::endl;
-	file<<"\tcmp %r2, %r1"<<std::endl;
-	file<<"\tbne NOSETZERO"<<nszcount<<std::endl;
-	file<<"\tmov %r0, $0"<<std::endl;
-	file<<"NOSETZERO"<<nszcount<<": @ label used to set as true"<<std::endl;
+	file<<"\tcmp %r0, $0"<<std::endl;
+	file<<"\tmovne %r0, $1"<<std::endl;
+	file<<"\tmoveq %r0, $0"<<std::endl;
+      } else {	
+	file<<"\tcmp %r1, %r2"<<std::endl;
+	file<<"\tmovne %r0, $1"<<std::endl;
+	file<<"\tmoveq %r0 $0"<<std::endl;
       }
       nszcount++;
       goto do_default;
     case LOGAND:
-      file<<"\tmul %r3, %r1, %r2"<<std::endl;
       file<<"\tmov %r0, $1"<<std::endl;
-      file<<"\tmov %r4, $0"<<std::endl;
-      file<<"\tcmp %r3, %r4"<<std::endl;
-      file<<"\tbne NSZ"<<nszcount<<std::endl;
-      file<<"\tmov %r0, $0"<<std::endl;
-      file<<"NSZ"<<nszcount<<": @ label used to set as true"<<std::endl;
-      nszcount++;
+      file<<"\tcmp %r1, $0"<<std::endl;
+      file<<"\tbeq AND"<<nszcount<<std::endl;
+      file<<"\tcmp %r2, $0"<<std::endl;
+      file<<"\tbeq AND"<<nszcount<<std::endl;
+      file<<"\tb AND"<<nszcount+1<<std::endl;
+      file<<"AND"<<nszcount<<":\tmov %r0, $0"<<std::endl;
+      file<<"AND"<<nszcount+1<<":"<<std::endl;
+      nszcount += 2;
       goto do_default;
     case LOGOR:
       file<<"\tadd %r1, %r1, %r2"<<std::endl;
@@ -351,7 +303,7 @@ void Command::push_variable(std::string var_name, std::stack<unsigned short> & v
       return;
     }
   }
-    
+ 
   for (int x = 0; x < m_int_vars.size(); ++x) {
     if (m_int_vars[x] == varname) {
       file<<"\tldr %r1, =I"<<x<<std::endl;
