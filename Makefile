@@ -23,5 +23,9 @@ bcc: y.tab.o lex.yy.o command.o
 install:
 	cp ./bcc /usr/bin/bcc
 
+documentation:
+	doxygen Doxyfile
+
 clean:
-	rm -f lex.yy.c y.tab.c y.tab.h bcc *.o *~ y.output
+	rm -f lex.yy.c y.tab.c y.tab.h bcc *.o *~ y.output y.dot
+	rm -rf doc
