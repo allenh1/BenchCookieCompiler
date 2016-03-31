@@ -272,7 +272,7 @@ void Command::evaluate_expression(std::ostream & file)
       file<<"NSZ"<<nszcount++<<": @ r1 <-- a && b"<<std::endl;
       file<<"\tcmp %r4, $0"<<std::endl;
       file<<"\tbne NSZ"<<nszcount<<std::endl;
-      file<"\tmov %r2, $0";
+      file<<"\tmov %r2, $0"<<nszcount<<std::endl;
       file<<"NSZ"<<nszcount<<": @ r1 <-- a || b"<<std::endl;
       file<<"\teor %r0, %r1, %r2"<<std::endl;
       nszcount++;
