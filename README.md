@@ -3,6 +3,10 @@ Bench Cookie Compiler
 Bench cookie is a simple, intuitive language.
 The syntax is kinda fun.
 
+Documentation:
+--------------
+You can find this projects documentation at [allen-software.com/bcc-doc](http://allen-software.com/bcc-doc).
+
 Status:
 -------
 This language has a LOT of work done. Note: as of right now,
