@@ -1,7 +1,31 @@
-// allocate enough space for drew-sized strings.
+  // allocate enough space for drew-sized strings.
 #ifndef ARM_COMPILER_SOURCE
 #define ARM_COMPILER_SOURCE
 #define MAX_STRING_SIZE 100
+
+
+# define MAX_REG_ALLOC 11
+
+/**
+ * This contains the register ordering for expression
+ * evaluation. If the number of variables/constants is
+ * less than MAX_REG_ALLOC, then this method of eval
+ * is possible (like in almost every circumstance).
+ */
+int reg_alloc[] = {
+  0,  // %r0
+  1,  // %r1
+  2,  // %r2
+  3,  // %r3
+  5,  // %r5
+  6,  // %r6
+  7,  // %r7
+  8,  // %r8
+  10, // %r10
+  11, // %r11
+  12, // %r12
+};
+
 void Command::doBSS(std::ostream & file)
 {
   file<<"\t.bss"<<std::endl<<std::endl;
@@ -41,6 +65,13 @@ void Command::doData(std::ostream & file)
 #define INTGR 67
 #define STRNG 68
 
+/** Checks for an operation */
+inline bool is_non_op (auto && exp) {
+  Command::exp_type tipo = static_cast<Command::exp_type>(exp.expr_type);
+  return tipo != Command::exp_type::VAR && tipo != Command::exp_type::AN_INT;
+};
+  
+
 void Command::evaluate_expression(std::ostream & file)
 {
   static ssize_t nszcount = 0;
@@ -53,22 +84,31 @@ void Command::evaluate_expression(std::ostream & file)
   std::stack<math_expression> * expr = m_evaluations[exprdex++];
   std::stack<unsigned short> arg_types;
   ssize_t stack_depth = 0;
-
+  ssize_t reg_num = 0, eval_reg = 0;
   std::stack<math_expression> eval;// = *expr;
-  for(; !expr->empty(); eval.push(expr->top()), expr->pop(), 1);
+  for(; !expr->empty(); eval.push(expr->top()), expr->pop(), 1) {
+    if (is_non_op(expr->top())) ++reg_num;
+  } bool reg_restrict = reg_num <= MAX_REG_ALLOC;
+  if (!reg_restrict) reg_num = -1;
+  else eval_reg = reg_num - 1;
+
   std::stack<math_expression> curr;
- 
+
   for (; eval.size();) {
     math_expression a = eval.top(); eval.pop();
     Command::exp_type type = static_cast<Command::exp_type>(a.expr_type);
     exp_type aExpType = static_cast<Command::exp_type>(a.expr_type);
     if (aExpType == VAR)  {
-      push_variable(a.pirate_name, arg_types, file);
+      push_variable(a.pirate_name, arg_types, file, reg_num--);
       stack_depth += 4;
       continue;
     } else if (aExpType == AN_INT) {
-      file<<"\tmov %r1, $"<<a.int_arg<<std::endl;
-      file<<"\tpush {%r1}"<<std::endl;
+      if (reg_restrict) {
+	file<<"\tmov %r"<<reg_num--<<", $"<<a.int_arg<<std::endl;
+      } else {
+	file<<"\tmov %r1, $"<<a.int_arg<<std::endl;
+	file<<"\tpush {%r1}"<<std::endl;
+      }
       stack_depth += 4;
       arg_types.push(INTGR);
       continue;
@@ -76,27 +116,41 @@ void Command::evaluate_expression(std::ostream & file)
       arg_types.push(STRNG);
       ssize_t idx = m_exp_literals.front();
       m_exp_literals.pop();
-      file<<"\tldr %r1, =S"<<idx<<std::endl;
-      file<<"\tpush {%r1}"<<std::endl;
-      stack_depth += 4;
+      if (reg_restrict) {
+	file<<"\tmov %r"<<reg_num--<<", =S"<<idx<<std::endl;
+      } else {
+	file<<"\tldr %r1, =S"<<idx<<std::endl;
+	file<<"\tpush {%r1}"<<std::endl;
+      }	stack_depth += 4;
       continue;
     } else if (aExpType == PTRDEREF) {
-      file<<"\tpop {%r1}"<<std::endl;
-      file<<"\tldr %r1, [%r1]"<<std::endl;
-      file<<"\tpush {%r1}"<<std::endl;
+      if (reg_restrict) {
+	file<<"\tldr %r"<<reg_num<<", [%r"<<reg_num + 1<<"]"<<std::endl;
+	--reg_num;
+      } else {
+	file<<"\tpop {%r1}"<<std::endl;
+	file<<"\tldr %r1, [%r1]"<<std::endl;
+	file<<"\tpush {%r1}"<<std::endl;
+      }
       continue;
     } else if (aExpType == LOGNOT) {
-      file<<"\tpop %{r1}"<<std::endl;
-      file<<"\tcmp %r1, $0"<<std::endl;
-      file<<"\tmoveq %r0, $0"<<std::endl;
-      file<<"\tmovneq %r0, $1"<<std::endl;
-      file<<"\tpush {%r0}"<<std::endl;
-      ++nszcount;
-      continue;
+      if (reg_restrict) {
+	file<<"\tcmp %r"<<reg_num+1<<", $0"<<std::endl;
+	file<<"\tmoveq %r"<<reg_num<<", $0"<<std::endl;
+	file<<"\tmovneq %r"<<reg_num<<", $1"<<std::endl;
+	--reg_num;
+      } else {
+	file<<"\tpop %{r1}"<<std::endl;
+	file<<"\tcmp %r1, $0"<<std::endl;
+	file<<"\tmoveq %r0, $0"<<std::endl;
+	file<<"\tmovneq %r0, $1"<<std::endl;
+	file<<"\tpush {%r0}"<<std::endl;
+      } continue;
     }
     
     if (stack_depth >= 8) {
-      file<<"\tpop {%r1, %r2}"<<std::endl;
+      if (!reg_restrict) 
+	file<<"\tpop {%r1, %r2}"<<std::endl;
       stack_depth -= 8;
     } else continue;
     switch (type) {
@@ -106,13 +160,20 @@ void Command::evaluate_expression(std::ostream & file)
        * You know, the stack_push((b=stack_pop(),a=stack_pop(),a+b))
        * kind of comma expresion.
        */
-      file<<"\tadd %r0, %r1, %r2"<<std::endl;
+      if (reg_restrict) {
+	file<<"\tadd %r"<<eval_reg<<", %r"<<eval_reg+1<<std::endl;
+	--eval_reg;
+      } else file<<"\tadd %r0, %r1, %r2"<<std::endl;
       goto do_default;
     case SUB:
-      file<<"\tsub %r0, %r2, %r1"<<std::endl;
+      if (reg_restrict)
+	file<<"\tsub %r"<<eval_reg-1<<", %r"<<eval_reg--<<std::endl;
+      else file<<"\tsub %r0, %r2, %r1"<<std::endl;
       goto do_default;
     case MUL:
-      file<<"\tmul %r0, %r1, %r2"<<std::endl;
+      if (reg_restrict)
+	file<<"\tmul %r"<<eval_reg-1<<", %r"<<eval_reg-1<<", %r"<<eval_reg--<<std::endl;
+      else file<<"\tmul %r0, %r1, %r2"<<std::endl;
       goto do_default;
     case DIV:
       /* @todo case divide by zero */
@@ -272,7 +333,7 @@ void Command::evaluate_expression(std::ostream & file)
       file<<"NSZ"<<nszcount++<<": @ r1 <-- a && b"<<std::endl;
       file<<"\tcmp %r4, $0"<<std::endl;
       file<<"\tbne NSZ"<<nszcount<<std::endl;
-      file<"\tmov %r2, $0";
+      file<<"\tmov %r2, $0";
       file<<"NSZ"<<nszcount<<": @ r1 <-- a || b"<<std::endl;
       file<<"\teor %r0, %r1, %r2"<<std::endl;
       nszcount++;
@@ -283,41 +344,48 @@ void Command::evaluate_expression(std::ostream & file)
       std::cerr<<"Don't use things I didn't implement yet."<<std::endl;
       exit(101);
     do_default:
-      file<<"\tpush {%r0}"<<std::endl;
+      if (reg_restrict && eval_reg == -1) return;
+      else if (!reg_restrict) file<<"\tpush {%r0}"<<std::endl;
       stack_depth += 4;
     }
   }
 }
 
 void Command::push_variable(std::string var_name, std::stack<unsigned short> & vartype,
-			    std::ostream & file)
+			    std::ostream & file, ssize_t reg_num)
 {
   std::string varname = var_name;
   for (int x = 0; x < m_int_declarations.size(); ++x) {
     if (m_int_declarations[x] == varname) {
-      file<<"\tmov %r1, %r9"<<std::endl;
-      file<<"\tldr %r1, [%r9, #"<<4 * x<<"]"<<std::endl;
-      file<<"\tldr %r1, [%r1]"<<std::endl;
-      file<<"\tpush {%r1}"<<std::endl;
-      vartype.push(INTGR);
+      file<<"\tmov %r4, %r9"<<std::endl;
+      file<<"\tldr %r4, [%r9, #"<<4 * x<<"]"<<std::endl;
+      if (reg_num != -1 ) {
+	file<<"\tldr %r"<<reg_num<<", [%r4]"<<std::endl;
+      } else {
+	file<<"\tldr %r4, [%r4]"<<std::endl;
+	file<<"\tpush {%r4}"<<std::endl;
+      } vartype.push(INTGR);
       return;
     }
   }
  
   for (int x = 0; x < m_int_vars.size(); ++x) {
     if (m_int_vars[x] == varname) {
-      file<<"\tldr %r1, =I"<<x<<std::endl;
-      file<<"\tldr %r1, [%r1]"<<std::endl;
-      file<<"\tpush {%r1}"<<std::endl;
-      vartype.push(INTGR);
+      file<<"\tldr %r4, =I"<<x<<std::endl;
+      if (reg_num != -1) file<<"\tldr %r"<<reg_num<<", [%r4]"<<std::endl;
+      else {
+	file<<"\tldr %r4, [%r4]"<<std::endl;
+	file<<"\tpush {%r4}"<<std::endl;
+      } vartype.push(INTGR);
       return;
     }
   }
   
   for (int x = 0; x < m_string_vars.size(); ++x) {
     if (m_string_vars[x] == varname) {
-      file<<"\tldr %r1, =IS"<<x<<std::endl;
-      file<<"\tpush {%r1}"<<std::endl;
+      file<<"\tldr %r4, =IS"<<x<<std::endl;
+      if (reg_num != -1) file<<"\tldr %r"<<reg_num<<", [%r4]"<<std::endl;
+      else file<<"\tpush {%r4}"<<std::endl;
       vartype.push(STRNG);
       return;
     }
@@ -347,7 +415,7 @@ void Command::doMain(std::ostream & file)
   for (int x = 0, intassdex = 0, stringdex = 0, exprdex = 0,
 	 intdex = 0, pintdex = 0, pstringdex = 0, litdex = 0,
 	 pbooldex = 0, sints = 0, ifndex = 0, forndex = 0, nszcount = 0;
-      x < m_execOrder.size(); ++x) {
+       x < m_execOrder.size(); ++x) {
 
     if (m_execOrder[x] == cmd_type::READ_STRING) {
       file<<"\tldr %r0, =string_fmt"<<std::endl;
@@ -486,18 +554,18 @@ void Command::doMain(std::ostream & file)
 
       evaluate_expression(file);
 
-      file<<"\tpop {%r0}"<<std::endl;
+      // file<<"\tpop {%r0}"<<std::endl;
    
       if (!on_stack) {
         int x;
-       for (x = 0; x < m_int_vars.size(); ++x) {
-        if (m_int_vars[x] == int_gets) break;
-       }
-	     file<<"\tldr %r3, =I"<<x<<std::endl;
+	for (x = 0; x < m_int_vars.size(); ++x) {
+	  if (m_int_vars[x] == int_gets) break;
+	}
+	file<<"\tldr %r3, =I"<<x<<std::endl;
       } else {
-	     file<<"\tmov %r3, %r9"<<std::endl;
-	     file<<"\tldr %r3, [%r3, #"<<*last_z * 4<<"]"<<std::endl;
-	     delete last_z;
+	file<<"\tmov %r3, %r9"<<std::endl;
+	file<<"\tldr %r3, [%r3, #"<<*last_z * 4<<"]"<<std::endl;
+	delete last_z;
       }
       file<<"\tstr %r0, [%r3]"<<std::endl;
       file<<std::endl; intassdex++;
@@ -579,22 +647,22 @@ void Command::writeAssembly()
       for (int x = 0; x < m_current_returns.size(); ++x) {
 	int y, z;
 	for (y = 0; y < m_int_vars.size(); ++y) {
-            if (m_int_vars[y] == m_current_returns[x]) break;
-          } if (y == m_int_vars.size()) {
-            std::cerr<<"Error: returned variable "<<m_current_returns[x]
-		     <<" was not declared!"<<std::endl;
-            exit(9);
-          } for (z = 0; z < m_int_declarations.size(); ++z) {
-	    if (m_int_declarations[z] == m_int_vars[y]) break;
-	  } if (z != m_int_declarations.size()) {
-	    file<<"\tmov %r6, %r9"<<std::endl;
-	    file<<"\tldr %r6, [%r9, #"<<4 * z<<"]"<<std::endl;
-	    file<<"\tldr %r6, [%r6]"<<std::endl;
-	  } else {
-	    file<<"\tldr %r6, =I"<<y<<std::endl;
-	    file<<"\tldr %r6, [%r6]"<<std::endl;
-	  }
-	  file<<"\tmov %r"<<x<<", %r6"<<std::endl;
+	  if (m_int_vars[y] == m_current_returns[x]) break;
+	} if (y == m_int_vars.size()) {
+	  std::cerr<<"Error: returned variable "<<m_current_returns[x]
+		   <<" was not declared!"<<std::endl;
+	  exit(9);
+	} for (z = 0; z < m_int_declarations.size(); ++z) {
+	  if (m_int_declarations[z] == m_int_vars[y]) break;
+	} if (z != m_int_declarations.size()) {
+	  file<<"\tmov %r6, %r9"<<std::endl;
+	  file<<"\tldr %r6, [%r9, #"<<4 * z<<"]"<<std::endl;
+	  file<<"\tldr %r6, [%r6]"<<std::endl;
+	} else {
+	  file<<"\tldr %r6, =I"<<y<<std::endl;
+	  file<<"\tldr %r6, [%r6]"<<std::endl;
+	}
+	file<<"\tmov %r"<<x<<", %r6"<<std::endl;
       }
     }
     file<<"\tpop {%lr}\t@ Restore return register"<<std::endl;

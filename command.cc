@@ -1,7 +1,5 @@
 /**
  * Benchcookie compiler
- *
- * Ehhhh... So dis works.
  */
 
 #include "command.h"

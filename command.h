@@ -126,7 +126,7 @@ public:
   
 private:
   void doBSS(std::ostream & file);
-  void push_variable(std::string var_name, std::stack<unsigned short> & vartypes, std::ostream & file);
+  void push_variable(std::string var_name, std::stack<unsigned short> & vartypes, std::ostream & file, ssize_t regnum = -1);
   void doData(std::ostream & file);
   void doMain(std::ostream & file);
 
@@ -140,6 +140,8 @@ private:
   std::vector<std::string> m_literals;
 
   func m_main;
+
+  ssize_t m_reg_depth = 0;
 
   std::string m_function_name;
 
