@@ -14,6 +14,8 @@
 #include <unistd.h>
 #include <string.h>
 
+const char * version = "0.0.1 pre-Alpha";
+
 struct func {
   func(std::string _name = std::string("main")) {
     m_name = _name;
