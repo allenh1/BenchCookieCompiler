@@ -372,6 +372,8 @@ const char * architecture = "x86";
 const char * architecture = "x86_64";
 #endif
 
+const char * version = "0.0.1 pre-Alpha";
+
 int yyparse(void);
 
 Command Command::cmd;
