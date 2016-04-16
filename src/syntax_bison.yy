@@ -35,7 +35,7 @@
 #include <cmath>
 #include "command.h"
 void yyerror(const char * s);
- int yylex();
+int yylex ();
 %}
 
 %%
@@ -192,9 +192,3 @@ void yyerror(const char * s)
   fprintf(stderr,"Error on line %d: %s\n", yylineno, s);
 }
 
-#if 0
-main()
-{
-	yyparse();
-}
-#endif

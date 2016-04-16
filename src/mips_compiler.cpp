@@ -2,7 +2,7 @@
 #define MAX_STRING_SIZE 100
 void Command::doBSS(std::ostream & file)
 {
-  file<<"\tlocals:\t.space 400";
+  file<<"\t.lcomm locals, 400";
   file<<std::endl;
 }
 
@@ -15,7 +15,7 @@ void Command::doData(std::ostream & file)
   for (int x = 0; x < m_literals.size(); ++x) {
     file<<".data"<<std::endl;
     file<<"S"<<x<<":\t.ascii \""<<m_literals[x]<<"\\0\""<<std::endl;
-    file<<std::endl;
+    std::endl;
   }
 
   std::cout<<std::endl;
@@ -23,14 +23,12 @@ void Command::doData(std::ostream & file)
   /** Place the Input Strings **/
 
   for (int x =0; x < m_string_vars.size(); ++x) {
-    file<<".data"<<std::endl;
-    file<<"IS"<<x<<":\t.space "<<MAX_STRING_SIZE<<std::endl<<std::endl;;
+    file<<"IS"<<x<<":\t.space "<<MAX_STRING_SIZE<<std::endl;
   }
   /** Place the integers. **/
 
   for (int x = 0; x < m_int_vars.size() - m_int_declarations.size(); ++x) {
-    file<<".data"<<sdt::endl;
-    file<<"I"<<x<<":\t.space 4"<<std::endl<<std::endl;;
+    file<<"I"<<x<<":\t.word 0"<<std::endl;
   }
 
   /** Mark space for locals **/

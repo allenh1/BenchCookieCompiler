@@ -141,6 +141,8 @@ private:
 
   func m_main;
 
+  ssize_t m_reg_depth = 0;
+
   std::string m_function_name;
 
   std::vector<std::string> m_print_strings;

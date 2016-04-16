@@ -363,18 +363,15 @@ void Command::addIntAssignment(char * varname) {
 
 #ifdef __arm__
 #include "arm_compiler.cpp"
-const char * architecture = "ARM";
 #elif  __X86__
 #include "x86_compiler.cpp"
-const char * architecture = "x86";
+#elif __aarch64__
+#include "arm_64_compiler.cpp"
 #else
 #include "x86_64_compiler.cpp"
-const char * architecture = "x86_64";
 #endif
 
-const char * version = "0.0.1 pre-Alpha";
-
-int yyparse(void);
+int syntaxparse(void);
 
 Command Command::cmd;
 ssize_t Command::line_num = 0;
@@ -385,16 +382,12 @@ int main(int argc, char ** argv)
     std::cerr<<"Invalid arguments!"<<std::endl;
     std::cerr<<"Usage: bcc output.s"<<std::endl;
     return 1;
-  } if (std::string(argv[1]) == "-v" || std::string(argv[1]) == "--version") {
-    std::cout<<"Bench Cookie Compiler, version "<<version<<"."<<std::endl;
-    std::cout<<"Compiled for "<<architecture<<"."<<std::endl;
-    return 0;
   }
   // get the filename
   Command::cmd.setFilename(std::string(argv[1]));
 
   //parse the code
-  yyparse();
+  syntaxparse();
 
   Command::cmd.writeAssembly();
 

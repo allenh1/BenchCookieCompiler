@@ -1,24 +1,25 @@
 %{
-
+#ifndef __syntax_ll__
+#define __syntax_ll__
 #include <string.h>
-#include <iostream>
-#include "y.tab.h"
-
-static  void yyunput (int c, char * buf_ptr);
-
+#include "syntax_bison.hh"
+static void yyunput (int c, char * buf_ptr);
 void myunputc(int c) {
     unput(c);
 }
-
+#define yylex		syntaxlex
+extern "C" int yyles ();
+#endif
 %}
 
 %option yylineno
+%option noyywrap
 
 %x BLK_COMMENT
 %x LINE_COMMENT
 %%
 [\t ]+ { /** discard spaces and tabs! **/ }
-[\n] { ++yylineno; }
+\n { }
 
 <INITIAL>"@;" BEGIN(BLK_COMMENT);
 <BLK_COMMENT>"@;" BEGIN(INITIAL);
@@ -87,14 +88,14 @@ void myunputc(int c) {
 \"(\\.|[^"])*\" { /*"*/
 	char * p;
 	for (p = yytext + 1; *p && *p != '\"'; ++p); /*"*/
-	yylval.string_val = (char*) calloc(p - yytext + 1, sizeof(char));
-	strncpy(yylval.string_val, yytext + 1, p - (yytext + 1));
+	syntaxlval.string_val = (char*) calloc(p - yytext + 1, sizeof(char));
+	strncpy(syntaxlval.string_val, yytext + 1, p - (yytext + 1));
 	return STRING_LITERALLY;
 }
 
-[^ ^|?\t\n\[\]\(\)\+\-\*\/]*[^ ^|?\t\n\[\]\(\)\+\-\*\/]*  {
-    yylval.string_val = (char*) calloc(strlen(yytext) + 1, sizeof(char));
-    strcpy(yylval.string_val, yytext);
+[^ ^|\t\n\[\]\(\)\+\-\*\/]*[^ ^|\t\n\[\]\(\)\+\-\*\/]*  {
+    syntaxlval.string_val = (char*) calloc(strlen(yytext) + 1, sizeof(char));
+    strcpy(syntaxlval.string_val, yytext);
     return WORD;
 }
 
