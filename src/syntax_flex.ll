@@ -2,11 +2,20 @@
 #ifndef __syntax_ll__
 #define __syntax_ll__
 #include <string.h>
+#include <iostream>
 #include "syntax_bison.hh"
 static void yyunput (int c, char * buf_ptr);
 void myunputc(int c) {
     unput(c);
 }
+int mygetc(FILE * fd) {
+    int ch;
+    for (; (ch = getc(fd)) == '\r';);
+    return ch;
+}
+#undef getc
+#define getc(fd)		mygetc(fd)
+
 #define yylex		syntaxlex
 extern "C" int yyles ();
 #endif

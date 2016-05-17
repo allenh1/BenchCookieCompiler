@@ -1,6 +1,7 @@
 #ifndef command_h
 #define command_h
 #include <functional>
+#include <sys/wait.h>
 #include <algorithm>
 #include <typeinfo>
 #include <iostream>
