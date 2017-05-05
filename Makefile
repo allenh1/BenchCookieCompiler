@@ -1,19 +1,21 @@
-all: compiler
+compiler := build/bcc
+CFLAGS := -std=c11 -O0
+INCLUDE := -I include
+source_files := $(wildcard src/*.c)
+included_files := $(wildcard include/bcc/*.h)
+object_files := $(patsubst src/%.c, \
+	build/%.o, $(source_files))
 
-integer.o: integer.c integer.h
-	gcc -c integer.c integer.h -o integer.o
+.PHONY: all clean
 
-float.o: float.c float.h
-	gcc -c float.c float.h -o float.o
+$(compiler): $(object_files) $(main.c)
+	@mkdir -p $(shell dirname $@)
+	@gcc $(CFLAGS) $(INCLUDE) src/main.c $(object_files) -o $(compiler)
 
-identifier.o: identifier.c identifier.h
-	gcc -c identifier.c identifier.h
-
-tokenizer.o: tokens.c tokens.h integer.o float.o identifier.o
-	gcc -c tokens.c integer.o float.o identifier.o -o tokenizer.o
-
-compiler: tokenizer.o
-	gcc main.c tokenizer.o -o tokenizer
+build/%.o: src/%.c $(included_files)
+	@mkdir -p $(shell dirname $@)
+	@gcc $(CFLAGS) $(INCLUDE) -c $< -o $@
 
 clean:
-	rm -f *~ *.o tokenizer
+	@rm -r build
+	@rm -f src/*~ include/bcc/*~ *~

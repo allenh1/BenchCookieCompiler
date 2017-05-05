@@ -30,13 +30,24 @@
 #define FLOAT      24
 #define NOTOKEN    25
 
+#include <assert.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 
-/* useful macros */
-#define IS_ALPHA(a) (a >= 'a' && a <= 'z') || (a >= 'A' && a <= 'Z')
-#define IS_DIGIT(a) a >= '0' && a <= '9'
+struct token {
+		char * image;
+		int tok;
+};
+
+struct token_node {
+		struct token_node * next;
+		struct token tok;
+};
+
+struct token_list {
+		struct token_node * head;
+};
 
 /* scanner functions */
 int matches_obracket (const char * str);
@@ -62,4 +73,55 @@ int matches_quote (const char * str);
 int matches_apostrophe (const char * str);
 int matches_alpha (const char * str);
 int matches_digit (const char * str);
+
+/* list functions */
+struct token_list * add_token(struct token_list * list,
+							  const struct token * tok);
+void free_token_list(const struct token_list * list);
+void print_token_list(const struct token_list * list);
+
+/* useful macros */
+#ifdef DEBUG
+/* macro to free a token */
+#define __free_token(tok)						\
+		do {									\
+				free(tok.image);				\
+				tok.image = NULL;				\
+		} while(0);
+
+#define __free_token_node(node)					\
+		do {									\
+				free(node);						\
+				node = NULL;					\
+		} while(0);
+#else
+#define __free_token(tok)						\
+		do {									\
+				free(tok->image);				\
+		} while(0);
+
+#define __free_token_node(node)					\
+		do {									\
+				free(node);						\
+		} while(0);
+#endif
+
+#define __matches_char(str, tok)				\
+		do {									\
+				if (!strlen(str)) return 0;		\
+				return *str == tok;				\
+		} while (0);
+
+#define __matches_string(str, key)				 \
+		do {									 \
+				size_t len = strlen(key);		 \
+				if (!strlen(str) < strlen(key))	 \
+						return 0;				 \
+				return !strncmp(str, key, len);	 \
+		} while (0);
+
+#define IS_ALPHA(a) (a >= 'a' && a <= 'z') \
+		|| (a >= 'A' && a <= 'Z')
+
+#define IS_DIGIT(a) a >= '0' && a <= '9'
 #endif
