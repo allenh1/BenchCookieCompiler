@@ -1,4 +1,4 @@
-/**
+/*
  * This header contains the tokens for the language.
  */
 #ifndef __TOKENS_H__
@@ -83,41 +83,41 @@ void print_token_list(const struct token_list * list);
 /* useful macros */
 #ifdef DEBUG
 /* macro to free a token */
-#define __free_token(tok)						\
-		do {									\
-				free(tok.image);				\
-				tok.image = NULL;				\
+#define __free_token(tok)                       \
+		do {                                    \
+				free(tok.image);                \
+				tok.image = NULL;               \
 		} while(0);
 
-#define __free_token_node(node)					\
-		do {									\
-				free(node);						\
-				node = NULL;					\
+#define __free_token_node(node)                 \
+		do {                                    \
+				free(node);                     \
+				node = NULL;                    \
 		} while(0);
 #else
-#define __free_token(tok)						\
-		do {									\
-				free(tok->image);				\
+#define __free_token(tok)                       \
+		do {                                    \
+				free(tok->image);               \
 		} while(0);
 
-#define __free_token_node(node)					\
-		do {									\
-				free(node);						\
+#define __free_token_node(node)                 \
+		do {                                    \
+				free(node);                     \
 		} while(0);
 #endif
 
 #define __matches_char(str, tok)				\
-		do {									\
-				if (!strlen(str)) return 0;		\
-				return *str == tok;				\
+		do {                                    \
+				if (!strlen(str)) return 0;     \
+				return *str == tok;             \
 		} while (0);
 
-#define __matches_string(str, key)				 \
-		do {									 \
-				size_t len = strlen(key);		 \
-				if (!strlen(str) < strlen(key))	 \
-						return 0;				 \
-				return !strncmp(str, key, len);	 \
+#define __matches_string(str, key)               \
+		do {                                     \
+				size_t len = strlen(key);        \
+				if (!strlen(str) < strlen(key))  \
+						return 0;                \
+				return !strncmp(str, key, len);  \
 		} while (0);
 
 #define IS_ALPHA(a) (a >= 'a' && a <= 'z') \
