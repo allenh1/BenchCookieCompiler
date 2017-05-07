@@ -32,4 +32,43 @@ and an _object_ is an _object_.
 
 Syntax:
 =======
-_todo: type words/examples here_
+_todo: add more_
+
+Example (fibonacci):
+--------------------
+```
+func fib [
+   capture self;
+   capture int fn, n;
+
+   maybe self ? [
+      maybe self.self ? [
+	     fn <-- self.fn + self.self.fn;
+	  ] or just fn = 1;
+   ] or just fn = 0;
+
+   n <-- self.n - 1;
+] (n >= 0) ? --> fib;
+
+func main [
+   func fib foo;
+   foo.n <-- 40;
+   int f40 <-- fib;
+]
+```
+
+As seen above, we can do some strange stuff.
+Recursion is handled by the capturing of `self`
+(self is like a back pointer to the prior instance).
+
+Then the function is passed to itself if n >= 0.
+
+In main, an instance of our function, foo, is created.
+Then we _initialize_ our function with `n <-- 40`. The
+value of the function is passed into the int, and the
+computation has to begin.
+
+Think of the functions like this:
+```
+fib (n = 40) --> fib (n = 39) --> ... --> fib (n = 0) --> f40
+```
