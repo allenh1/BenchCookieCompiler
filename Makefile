@@ -10,7 +10,7 @@ object_files := $(patsubst src/%.c, \
 
 $(compiler): $(object_files) $(main.c)
 	@mkdir -p $(shell dirname $@)
-	@gcc $(CFLAGS) $(INCLUDE) src/main.c $(object_files) -o $(compiler)
+	@gcc $(CFLAGS) $(INCLUDE) $(object_files) -o $(compiler)
 
 build/%.o: src/%.c $(included_files)
 	@mkdir -p $(shell dirname $@)

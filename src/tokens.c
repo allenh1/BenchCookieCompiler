@@ -60,11 +60,6 @@ int matches_bang(const char * str)
 		__matches_char(str, '!');
 }
 
-int matches_func(const char * str)
-{
-		__matches_string(str, "func");
-}
-
 int matches_comma(const char *str)
 {
 		__matches_char(str, ',');
@@ -81,12 +76,12 @@ int matches_bslash(const char * str)
 		__matches_char(str, '\\');
 }
 
-int matches_and(const char * str)
+int matches_ampersand(const char * str)
 {
 		__matches_char(str, '&');
 }
 
-int matches_or(const char * str)
+int matches_pipe(const char * str)
 {
 		__matches_char(str, '|');
 }
@@ -104,6 +99,51 @@ int matches_quote(const char * str)
 int matches_apostrophe(const char *str)
 {
 		__matches_char(str, '\'');
+}
+
+int matches_int(const char * str)
+{
+		__matches_string(str, "int");
+}
+
+int matches_bool(const char * str)
+{
+		__matches_string(str, "bool");
+}
+
+int matches_char(const char * str)
+{
+		__matches_string(str, "char");
+}
+
+int matches_double(const char * str)
+{
+		__matches_string(str, "double");
+}
+
+int matches_func(const char * str)
+{
+		__matches_string(str, "func");
+}
+
+int matches_maybe(const char * str)
+{
+		__matches_string(str, "maybe");
+}
+
+int matches_just(const char * str)
+{
+		__matches_string(str, "just");
+}
+
+int matches_or(const char * str)
+{
+		__matches_string(str, "or");
+}
+
+int matches_and(const char * str)
+{
+		__matches_string(str, "and");
 }
 
 int is_alpha(const char * str)

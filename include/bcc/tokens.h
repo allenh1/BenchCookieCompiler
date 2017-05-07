@@ -3,6 +3,13 @@
  */
 #ifndef __TOKENS_H__
 #define __TOKENS_H__
+/* C lib includes */
+#include <assert.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+/* token constants */
 #define OBRACKET   0
 #define CBRACKET   1
 #define OBRACE     2
@@ -19,8 +26,8 @@
 #define COMMA      13
 #define FSLASH     14
 #define BSLASH     15
-#define AND        16
-#define OR         17
+#define AMPERSAND  16
+#define PIPE       17
 #define AT         18
 #define QUOTE      19
 #define APOSTROPHE 20
@@ -29,12 +36,20 @@
 #define INTEGER    23
 #define FLOAT      24
 #define NOTOKEN    25
+#define CAPTURE    26
+#define MAYBE      27
+#define INT        28
+#define BOOL       29
+#define CHAR       30
+#define DOUBLE     31
+#define LONG       32
+#define UNSIGNED   33
+#define QUESTION   34
+#define AND        35
+#define OR         36
+#define JUST       37
 
-#include <assert.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-
+/* token containers */
 struct token {
 		char * image;
 		int tok;
@@ -66,13 +81,22 @@ int matches_func (const char * str);
 int matches_comma (const char * str);
 int matches_fslash (const char * str);
 int matches_bslash (const char * str);
-int matches_and (const char * str);
-int matches_or (const char * str);
+int matches_ampersand (const char * str);
+int matches_pipe (const char * str);
 int matches_at (const char * str);
 int matches_quote (const char * str);
 int matches_apostrophe (const char * str);
 int matches_alpha (const char * str);
 int matches_digit (const char * str);
+int matches_int (const char * str);
+int matches_bool (const char * str);
+int matches_char (const char * str);
+int matches_double (const char * str);
+int matches_func (const char * str);
+int matches_maybe (const char * str);
+int matches_just (const char * str);
+int matches_or (const char * str);
+int matches_and (const char * str);
 
 /* list functions */
 struct token_list * add_token(struct token_list * list,
