@@ -1,0 +1,15 @@
+stages:
+  - build
+  - test
+
+compile:
+  stage: build
+  script:
+    - make
+
+test_scanner:
+  stage: test
+  script:
+    - make
+    - cd tests/scanner
+    - ./testall.sh
