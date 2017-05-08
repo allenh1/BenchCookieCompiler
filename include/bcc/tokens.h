@@ -13,7 +13,7 @@
 #define OBRACKET   0
 #define CBRACKET   1
 #define OBRACE     2
-#define CBRAKE     3
+#define CBRACE     3
 #define OPAREN     4
 #define CPAREN     5
 #define PLUS       6
@@ -97,6 +97,7 @@ int matches_maybe (const char * str);
 int matches_just (const char * str);
 int matches_or (const char * str);
 int matches_and (const char * str);
+int matches_notoken (const char * str);
 
 /* list functions */
 struct token_list * add_token(struct token_list * list,
@@ -148,4 +149,6 @@ void print_token_list(const struct token_list * list);
 		|| (a >= 'A' && a <= 'Z')
 
 #define IS_DIGIT(a) a >= '0' && a <= '9'
+
+#define is_whitespace(a) (a == ' ' || a == '\n' || a == '\t')
 #endif

@@ -65,7 +65,6 @@ int matches_comma(const char *str)
 		__matches_char(str, ',');
 }
 
-
 int matches_fslash(const char * str)
 {
 		__matches_char(str, '/');
@@ -146,6 +145,11 @@ int matches_and(const char * str)
 		__matches_string(str, "and");
 }
 
+int matches_notoken(const char * str)
+{
+		return *str && is_whitespace(*str);
+}
+
 int is_alpha(const char * str)
 {
 		if (!strlen(str)) return 0;
@@ -157,8 +161,6 @@ int is_digit(const char * str)
 		if (!strlen(str)) return 0;
 		return IS_DIGIT(*str);
 }
-
-
 
 /*
  * List functions

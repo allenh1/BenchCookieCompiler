@@ -8,7 +8,7 @@ int main(int argc, char ** argv)
 {
 		if (argc != 2) goto error;
 
-		struct token_list * tokens = scan(argv[2]);
+		struct token_list * tokens = scan(argv[1]);
 		print_token_list(tokens);		
 		/* @todo struct ast * ast = build_ast(tokens); */
 		/* @todo optimization lvl 1 */

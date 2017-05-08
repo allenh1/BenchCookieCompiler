@@ -28,7 +28,7 @@ void print_each_node(const struct token_node * iter)
 		case OBRACE:
 				printf("{<OBRACE>: %s}\n", token.image);
 				break;
-		case CBRAKE:
+		case CBRACE:
 				printf("{<CBRAKE>: %s}\n", token.image);
 				break;
 		case OPAREN:
