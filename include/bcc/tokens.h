@@ -31,23 +31,26 @@
 #define AT         18
 #define QUOTE      19
 #define APOSTROPHE 20
-#define DIGIT      21
-#define ALPHA      22
-#define INTEGER    23
-#define FLOAT      24
-#define NOTOKEN    25
-#define CAPTURE    26
-#define MAYBE      27
-#define INT        28
-#define BOOL       29
-#define CHAR       30
-#define DOUBLE     31
-#define LONG       32
-#define UNSIGNED   33
-#define QUESTION   34
-#define AND        35
-#define OR         36
-#define JUST       37
+#define NOTOKEN    21
+#define CAPTURE    22
+#define MAYBE      23
+#define INT        24
+#define BOOL       25
+#define CHAR       26
+#define DOUBLE     27
+#define LONG       28
+#define UNSIGNED   29
+#define QUESTION   30
+#define AND        31
+#define OR         32
+#define JUST       33
+#define INTEGER    34
+#define FLOAT      35
+#define NAME       36
+#define STRING_LIT 37
+#define CHAR_LIT   38
+#define DIGIT      39
+#define ALPHA      40
 
 /* token containers */
 struct token {
@@ -98,6 +101,10 @@ int matches_just (const char * str);
 int matches_or (const char * str);
 int matches_and (const char * str);
 int matches_notoken (const char * str);
+int matches_capture (const char * str);
+int matches_long (const char * str);
+int matches_unsigned (const char * str);
+int matches_question (const char * question);
 
 /* list functions */
 struct token_list * add_token(struct token_list * list,

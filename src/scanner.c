@@ -39,6 +39,50 @@ struct token * get_next_token(const char ** source)
 				__set_char_tok(source, SEMICOLON);
 		} else if (matches_underscore(*source)) {
 				__set_char_tok(source, UNDERSCORE);
+		} else if (matches_bang(*source)) {
+				__set_char_tok(source, BANG);
+		} else if (matches_func(*source)) {
+				__set_nlen_tok(source, 4, FUNC);
+		} else if (matches_comma(*source)) {
+				__set_char_tok(source, COMMA);
+		} else if (matches_fslash(*source)) {
+				__set_char_tok(source, FSLASH);
+		} else if (matches_bslash(*source)) {
+				__set_char_tok(source, BSLASH);
+		} else if (matches_ampersand(*source)) {
+				__set_char_tok(source, AMPERSAND);
+		} else if (matches_pipe(*source)) {
+				__set_char_tok(source, PIPE);
+		} else if (matches_at(*source)) {
+				__set_char_tok(source, AT);
+		} else if (matches_quote(*source)) {
+				__set_char_tok(source, QUOTE);
+		} else if (matches_apostrophe(*source)) {
+				__set_char_tok(source, APOSTROPHE);
+		} else if (matches_capture(*source)) {
+				__set_nlen_tok(source, 7, CAPTURE);
+		} else if (matches_maybe(*source)) {
+				__set_nlen_tok(source, 5, MAYBE);
+		} else if (matches_int(*source)) {
+				__set_nlen_tok(source, 3, INT);
+		} else if (matches_bool(*source)) {
+				__set_nlen_tok(source, 4, BOOL);
+		} else if (matches_char(*source)) {
+				__set_nlen_tok(source, 4, CHAR);
+		} else if (matches_double(*source)) {
+				__set_nlen_tok(source, 6, DOUBLE);
+		} else if (matches_long(*source)) {
+				__set_nlen_tok(source, 4, LONG);
+		} else if (matches_unsigned(*source)) {
+				__set_nlen_tok(source, 8, UNSIGNED);
+		} else if (matches_question(*source)) {
+				__set_char_tok(source, QUESTION);
+		} else if (matches_and(*source)) {
+				__set_nlen_tok(source, 3, AND);
+		} else if (matches_or(*source)) {
+				__set_nlen_tok(source, 2, OR);
+		} else if (matches_just(*source)) {
+				__set_nlen_tok(source, 4, JUST);
 		} else if (matches_notoken(*source) || (**source) == '\0') {
 				__set_char_tok(source, NOTOKEN);
 		} else {

@@ -15,3 +15,11 @@ char * strndup(const char * str, size_t bytes);
 		token->image = strndup((*str)++, 1);	\
 		token->tok   = t;						\
 	} while (0);
+
+/* like the above, but eat n chars */
+#define __set_nlen_tok(str, n, t)				\
+	do {										\
+			token->image = strndup((*str), 1);	\
+			token->tok   = t;					\
+			*str += n;							\
+	} while (0);

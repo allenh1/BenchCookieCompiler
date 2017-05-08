@@ -100,6 +100,11 @@ int matches_apostrophe(const char *str)
 		__matches_char(str, '\'');
 }
 
+int matches_question(const char * str)
+{
+		__matches_char(str, '?');
+}
+
 int matches_int(const char * str)
 {
 		__matches_string(str, "int");
@@ -143,6 +148,21 @@ int matches_or(const char * str)
 int matches_and(const char * str)
 {
 		__matches_string(str, "and");
+}
+
+int matches_capture(const char * str)
+{
+		__matches_string(str, "capture");
+}
+
+int matches_long(const char * str)
+{
+		__matches_string(str, "long");
+}
+
+int matches_unsigned(const char * str)
+{
+		__matches_string(str, "unsigned");
 }
 
 int matches_notoken(const char * str)
