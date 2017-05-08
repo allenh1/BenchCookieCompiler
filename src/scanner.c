@@ -4,7 +4,7 @@ char * strndup(const char * str, size_t bytes)
 {
 		char * ret = malloc(bytes + 1);
 		char * r = ret;
-		for (; bytes --> 0; *(r++) = *(str++));
+		for (size_t b = bytes; b --> 0; *(r++) = *(str++));
 		ret[bytes] = '\0';
 		return ret;
 }
@@ -18,29 +18,29 @@ struct token * get_next_token(const char ** source)
 		 * just wait till the parser...
 		 */
 		if (matches_obracket(*source)) {
-				__set_char_tok(*source, OBRACKET);
+				__set_char_tok(source, OBRACKET);
 		} else if (matches_cbracket(*source)) {
-				__set_char_tok(*source, CBRACKET);
+				__set_char_tok(source, CBRACKET);
 		} else if (matches_obrace(*source)) {
-				__set_char_tok(*source, OBRACE);
+				__set_char_tok(source, OBRACE);
 		} else if (matches_cbrace(*source)) {
-				__set_char_tok(*source, CBRACE);
+				__set_char_tok(source, CBRACE);
 		} else if (matches_oparen(*source)) {
-				__set_char_tok(*source, OPAREN);
+				__set_char_tok(source, OPAREN);
 		} else if (matches_cparen(*source)) {
-				__set_char_tok(*source, CPAREN);
+				__set_char_tok(source, CPAREN);
 		} else if (matches_plus(*source)) {
-				__set_char_tok(*source, PLUS);
+				__set_char_tok(source, PLUS);
 		} else if (matches_minus(*source)) {
-				__set_char_tok(*source, MINUS);
+				__set_char_tok(source, MINUS);
 		} else if (matches_star(*source)) {
-				__set_char_tok(*source, STAR);
+				__set_char_tok(source, STAR);
 		} else if (matches_semicolon(*source)) {
-				__set_char_tok(*source, SEMICOLON);
+				__set_char_tok(source, SEMICOLON);
 		} else if (matches_underscore(*source)) {
-				__set_char_tok(*source, UNDERSCORE);
+				__set_char_tok(source, UNDERSCORE);
 		} else if (matches_notoken(*source) || (**source) == '\0') {
-				__set_char_tok(*source, NOTOKEN);
+				__set_char_tok(source, NOTOKEN);
 		} else {
 				fprintf(stderr, "error: invalid token \"%s\"\n", *source);
 				return NULL;
@@ -49,9 +49,9 @@ struct token * get_next_token(const char ** source)
 
 struct token_list * scan(const char * filename)
 {
-		char * source = calloc(128, sizeof(*source));
+		char * source = calloc(129, sizeof(char));
 		int fd = -1; size_t bytes_read = 0;
-		size_t source_size = 0; /* 1 for '\0' */
+		size_t source_size = 0;
 
 		if ((fd = open(filename, O_RDONLY, 0600)) == -1) {
 				perror("open");
@@ -62,7 +62,7 @@ struct token_list * scan(const char * filename)
 		/* read the file */
 		for (; bytes_read = read(fd, source + source_size, 128);) {
 				source = realloc(source, source_size += bytes_read);
-		} source[source_size] = '\0';
+		} source[source_size++] = '\0';
 
 		/* if source is empty, return NULL */
 		if (!source_size) return NULL;
@@ -73,7 +73,7 @@ struct token_list * scan(const char * filename)
 
 		/* iterate over our source, gathering tokens */
 		struct token * tok = NULL; char * iter = source;
-		for (; tok = get_next_token((const char **) &iter);) {
+		for (; *iter && (tok = get_next_token((const char **) &iter));) {
 				if (tok->tok != NOTOKEN) add_token(tokens, tok);
 				__free_token(tok);
 		}

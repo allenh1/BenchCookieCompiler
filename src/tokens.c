@@ -175,12 +175,17 @@ struct token_list * add_token(
 		/* iterate to the end of the list */
 		for (; (*iter) != NULL; iter = &(*iter)->next);
 
+		/* get length of token */
+		size_t len = strlen(tok->image);
+
 		/* allocate new token node */
 		assert(*iter = malloc(sizeof(**iter)));
+		assert((*iter)->tok.image = malloc(len));
 
 		/* initialize the new node */
 		(*iter)->next = NULL;
-		memcpy(&((*iter)->tok), tok, sizeof(*tok));
+		strcpy((*iter)->tok.image, tok->image);
+		(*iter)->tok.tok = tok->tok;
 
 		/* return the list */
 		return list;

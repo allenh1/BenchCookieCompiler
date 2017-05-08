@@ -133,7 +133,6 @@ void print_token_list(const struct token_list * list);
 
 #define __matches_char(str, tok)				\
 		do {                                    \
-				if (!strlen(str)) return 0;     \
 				return *str == tok;             \
 		} while (0);
 
