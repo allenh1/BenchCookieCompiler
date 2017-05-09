@@ -11,5 +11,5 @@ test_scanner:
   stage: test
   script:
     - make
-    - cd tests/scanner
+    - cd test/scanner
     - ./testall.sh
