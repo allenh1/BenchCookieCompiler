@@ -105,6 +105,7 @@ int matches_capture (const char * str);
 int matches_long (const char * str);
 int matches_unsigned (const char * str);
 int matches_question (const char * question);
+int matches_integer (const char * str, char ** img);
 
 /* list functions */
 struct token_list * add_token(struct token_list * list,
@@ -155,6 +156,12 @@ void print_token_list(const struct token_list * list);
 		|| (a >= 'A' && a <= 'Z')
 
 #define IS_DIGIT(a) a >= '0' && a <= '9'
+
+#define is_hex(a) (a >= '0' && a <= '9')						\
+		|| (a >= 'a' && a <= 'f')								\
+		|| (a >= 'A' && a <= 'F')
+
+#define is_bin(a) (a == '0' || a == '1')
 
 #define is_whitespace(a) (a == ' ' || a == '\n' || a == '\t')
 #endif
