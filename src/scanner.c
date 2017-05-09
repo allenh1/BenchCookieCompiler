@@ -12,11 +12,17 @@ char * strndup(const char * str, size_t bytes)
 struct token * get_next_token(const char ** source)
 {
 		struct token * token = malloc(sizeof(*token));
+		int imgLen;
 
 		/*
 		 * If you hate me now, I understand.
 		 * just wait till the parser...
 		 */
+
+
+		/*
+		 optimum strategy, filter by ascii ranges, separate single char 		  tokens from multi char tokens to avoid redudant checks? 
+		*/
 		if (matches_obracket(*source)) {
 				__set_char_tok(source, OBRACKET);
 		} else if (matches_cbracket(*source)) {
@@ -85,6 +91,8 @@ struct token * get_next_token(const char ** source)
 				__set_nlen_tok(source, 4, JUST);
 		} else if (matches_notoken(*source) || (**source) == '\0') {
 				__set_char_tok(source, NOTOKEN);
+		} else if ((imgLen = matches_float(*source))>0){
+				__set_nlen_tok(source, imgLen, INT);
 		} else {
 				fprintf(stderr, "error: invalid token \"%s\"\n", *source);
 				return NULL;

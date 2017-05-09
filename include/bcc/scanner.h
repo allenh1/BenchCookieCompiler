@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <fcntl.h>
+#include <float.h>
 
 struct token_list * scan(const char * filename);
 struct token * get_next_token(const char ** source);
@@ -19,7 +20,7 @@ char * strndup(const char * str, size_t bytes);
 /* like the above, but eat n chars */
 #define __set_nlen_tok(str, n, t)				\
 	do {										\
-			token->image = strndup((*str), 1);	\
+			token->image = strndup((*str), n);	\
 			token->tok   = t;					\
 			*str += n;							\
 	} while (0);
