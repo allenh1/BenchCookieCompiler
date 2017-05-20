@@ -1,0 +1,8 @@
+{<OBRACKET>: [}
+{<INT>: int}
+{<SEMICOLON>: ;}
+{<INTEGER>: 7}
+{<SEMICOLON>: ;}
+{<FLOAT>: 7.43}
+{<SEMICOLON>: ;}
+{<CBRACKET>: ]}

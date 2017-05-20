@@ -9,6 +9,7 @@
 struct token_list * scan(const char * filename);
 struct token * get_next_token(const char ** source);
 char * strndup(const char * str, size_t bytes);
+char * strdup(const char * str);
 
 /* macro to set the token to a given char */
 #define __set_char_tok(str, t)					\
@@ -24,3 +25,9 @@ char * strndup(const char * str, size_t bytes);
 			token->tok   = t;					\
 			*str += n;							\
 	} while (0);
+
+#ifdef DEBUG
+#define DBG
+#else
+#define DBG for (; 0;)
+#endif

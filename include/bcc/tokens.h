@@ -106,6 +106,7 @@ int matches_long (const char * str);
 int matches_unsigned (const char * str);
 int matches_question (const char * question);
 int matches_integer (const char * str, char ** img);
+int matches_float (const char * str, char ** img);
 
 /* list functions */
 struct token_list * add_token(struct token_list * list,
@@ -116,16 +117,15 @@ void print_token_list(const struct token_list * list);
 /* useful macros */
 #ifdef DEBUG
 /* macro to free a token */
-#define __free_token(tok)                       \
-		do {                                    \
-				free(tok.image);                \
-				tok.image = NULL;               \
+#define __free_token(tok)						 \
+		do {									 \
+				free(tok->image);                \
+				tok->image = NULL;               \
 		} while(0);
 
 #define __free_token_node(node)                 \
 		do {                                    \
 				free(node);                     \
-				node = NULL;                    \
 		} while(0);
 #else
 #define __free_token(tok)                       \
@@ -147,7 +147,7 @@ void print_token_list(const struct token_list * list);
 #define __matches_string(str, key)               \
 		do {                                     \
 				size_t len = strlen(key);        \
-				if (!strlen(str) < strlen(key))  \
+				if (strlen(str) < strlen(key))  \
 						return 0;                \
 				return !strncmp(str, key, len);  \
 		} while (0);

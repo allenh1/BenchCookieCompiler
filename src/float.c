@@ -1,10 +1,11 @@
 #include <bcc/tokens.h>
 
-int matches_float(const char * str, char ** img) {
+int matches_float(const char * str, char ** img)
+{
 		enum states { A, B, C, D, E, F, G, H};
 		enum states state = A;
 		int multiplier = 1;
-		char * beg = str;
+		const char * beg = str;
 		
 		while(1) {
 				//printf("State %d\n", state );

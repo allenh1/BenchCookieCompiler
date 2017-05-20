@@ -1,5 +1,13 @@
 #include <bcc/scanner.h>
 
+char * strdup(const char * str)
+{		
+		const char * iter;
+
+		for (iter = str; *(iter++););
+		return strndup(str, iter - str);
+}
+
 char * strndup(const char * str, size_t bytes)
 {
 		char * ret = malloc(bytes + 1);
@@ -12,7 +20,8 @@ char * strndup(const char * str, size_t bytes)
 struct token * get_next_token(const char ** source)
 {
 		struct token * token = malloc(sizeof(*token));
-		int imgLen;
+		char * tmp = NULL; /* shut up, GCC */
+		size_t imgLen = 0;
 
 		/*
 		 * If you hate me now, I understand.
@@ -21,8 +30,10 @@ struct token * get_next_token(const char ** source)
 
 
 		/*
-		 optimum strategy, filter by ascii ranges, separate single char 		  tokens from multi char tokens to avoid redudant checks? 
-		*/
+		 * optimum strategy, filter by ascii ranges, separate single char
+		 * tokens from multi char tokens to avoid redudant checks? 
+		 *     ~Eric B.
+		 */
 		if (matches_obracket(*source)) {
 				__set_char_tok(source, OBRACKET);
 		} else if (matches_cbracket(*source)) {
@@ -91,8 +102,12 @@ struct token * get_next_token(const char ** source)
 				__set_nlen_tok(source, 4, JUST);
 		} else if (matches_notoken(*source) || (**source) == '\0') {
 				__set_char_tok(source, NOTOKEN);
-		} else if ((imgLen = matches_float(*source))>0){
-				__set_nlen_tok(source, imgLen, INT);
+		} else if ((imgLen = matches_integer(*source, &tmp))) {
+				token->image = tmp;
+				token->tok = INTEGER;
+				*source += imgLen;
+		} else if ((imgLen = matches_float(*source, &tmp))){
+				__set_nlen_tok(source, imgLen, FLOAT);
 		} else {
 				fprintf(stderr, "error: invalid token \"%s\"\n", *source);
 				return NULL;

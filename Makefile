@@ -1,5 +1,5 @@
 compiler := build/bcc
-CFLAGS := -std=c11 -O0 -g
+CFLAGS := -std=c11 -O0 -g -DDEBUG
 INCLUDE := -I include
 source_files := $(wildcard src/*.c)
 included_files := $(wildcard include/bcc/*.h)
