@@ -18,6 +18,6 @@
  */
 
 #ifndef __FLOAT_H__
-#Define __FLOAT_H__
+#define __FLOAT_H__
 int matches_float(const char * str, char ** img);
 #endif
