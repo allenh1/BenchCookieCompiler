@@ -16,11 +16,16 @@ for c_file in src/*.c; do
     dif=$(diff -ur $c_file $c_file.uncrustify)
 
     if [[ ! -z $dif ]]; then
-        echo "src/$c_file does not conform to Kernel style!"
+        echo "$c_file does not conform to Kernel style!"
         echo "Patch will be found in $c_file.patch."
         diff -ur $c_file $c_file.uncrustify > $c_file.patch
         rm $c_file.uncrustify
+        echo "You may apply the patch like this:"
+        echo "    patch -p1 $c_file < $c_file.patch"
         exit 2
     fi
     rm $c_file.uncrustify
 done
+
+echo "All source files successfully linted."
+exit 0
