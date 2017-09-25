@@ -151,9 +151,6 @@ struct token_list * scan(const char * filename)
 		source = realloc(source, source_size += bytes_read);
 	source[source_size++] = '\0';
 
-	/* if source is empty, return NULL */
-	if (!source_size) return NULL;
-
 	/* create our list */
 	struct token_list * tokens = malloc(sizeof(*tokens));
 	tokens->head = NULL;

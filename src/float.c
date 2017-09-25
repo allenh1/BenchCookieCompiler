@@ -27,75 +27,64 @@ int matches_float(const char * str, char ** img)
 	const char * beg = str;
 
 	for (;; ) {
-		//printf("State %d\n", state );
 		switch (state) {
 		case A:
 			if (*str == '.') {
 				state = B;
 				str++;
-			}else if (IS_DIGIT(*str)) {
+			} else if (IS_DIGIT(*str)) {
 				state = C;
 				str++;
-			}else return 0;
+			} else return 0;
 			break;
 		case B:
-			if ( IS_DIGIT(*str)) {
+			if (IS_DIGIT(*str)) {
 				str++;
 				state = D;
-			}else return 0;
+			} else return 0;
 			break;
 		case C:
-			if (IS_DIGIT(*str))
+			if (IS_DIGIT(*str)) {
 				str++;
-			else if ( *str == 'e' || *str == 'E') {
+			} else if (*str == 'e' || *str == 'E') {
 				str++;
 				state = F;
-			}else if ( *str == '.') {
+			} else if (*str == '.') {
 				str++;
 				state = D;
-			}else return str - beg;
+			} else return str - beg;
 			break;
-
 		case D:
-			if (IS_DIGIT(*str))
+			if (IS_DIGIT(*str)) {
 				str++;
-			else if ( *str == 'e' || *str == 'E') {
+			} else if (*str == 'e' || *str == 'E') {
 				str++;
 				state = F;
-			}else return str - beg;
+			} else return str - beg;
 			break;
-
 		case E:
-
-
+			/* TODO(bond15): comments */
 			break;
-
 		case F:
-			if ( *str == '-') {
+			if (*str == '-') {
 				str++;
 				state = G;
-			}else if (IS_DIGIT(*str)) {
+			} else if (IS_DIGIT(*str)) {
 				str++;
 				state = H;
-			}else return 0;
-
+			} else return 0;
 			break;
-
 		case G:
 			if (IS_DIGIT(*str)) {
 				str++;
 				state = H;
-			}else return 0;
-
+			} else return 0;
 			break;
-
 		case H:
 			if (IS_DIGIT(*str))
 				str++;
 			else return str - beg;
-
 			break;
-
 		default:
 			break;
 		}
