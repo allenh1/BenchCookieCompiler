@@ -1,6 +1,22 @@
 /*
- * This header contains the tokens for the language.
+ * Bench Cookie Compiler
+ * Copyright (C) 2017  Hunter L. Allen, Eric C. Theller, Eric P. Bond
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
+
 #ifndef __TOKENS_H__
 #define __TOKENS_H__
 /* C lib includes */
@@ -54,17 +70,17 @@
 
 /* token containers */
 struct token {
-		char * image;
-		int tok;
+        char * image;
+        int tok;
 };
 
 struct token_node {
-		struct token_node * next;
-		struct token tok;
+        struct token_node * next;
+        struct token tok;
 };
 
 struct token_list {
-		struct token_node * head;
+        struct token_node * head;
 };
 
 /* scanner functions */
@@ -105,10 +121,12 @@ int matches_capture (const char * str);
 int matches_long (const char * str);
 int matches_unsigned (const char * str);
 int matches_question (const char * question);
+int matches_integer (const char * str, char ** img);
+int matches_float (const char * str, char ** img);
 
 /* list functions */
 struct token_list * add_token(struct token_list * list,
-							  const struct token * tok);
+                              const struct token * tok);
 void free_token_list(const struct token_list * list);
 void print_token_list(const struct token_list * list);
 
@@ -116,45 +134,50 @@ void print_token_list(const struct token_list * list);
 #ifdef DEBUG
 /* macro to free a token */
 #define __free_token(tok)                       \
-		do {                                    \
-				free(tok.image);                \
-				tok.image = NULL;               \
-		} while(0);
+        do {                                    \
+                free(tok->image);               \
+                tok->image = NULL;              \
+        } while(0);
 
 #define __free_token_node(node)                 \
-		do {                                    \
-				free(node);                     \
-				node = NULL;                    \
-		} while(0);
+        do {                                    \
+                free(node);                     \
+        } while(0);
 #else
 #define __free_token(tok)                       \
-		do {                                    \
-				free(tok->image);               \
-		} while(0);
+        do {                                    \
+                free(tok->image);               \
+        } while(0);
 
 #define __free_token_node(node)                 \
-		do {                                    \
-				free(node);                     \
-		} while(0);
+        do {                                    \
+                free(node);                     \
+        } while(0);
 #endif
 
-#define __matches_char(str, tok)				\
-		do {                                    \
-				return *str == tok;             \
-		} while (0);
+#define __matches_char(str, tok)                \
+        do {                                    \
+                return *str == tok;             \
+        } while (0);
 
-#define __matches_string(str, key)               \
-		do {                                     \
-				size_t len = strlen(key);        \
-				if (!strlen(str) < strlen(key))  \
-						return 0;                \
-				return !strncmp(str, key, len);  \
-		} while (0);
+#define __matches_string(str, key)              \
+        do {                                    \
+                size_t len = strlen(key);       \
+                if (strlen(str) < strlen(key))  \
+                        return 0;               \
+                return !strncmp(str, key, len); \
+        } while (0);
 
-#define IS_ALPHA(a) (a >= 'a' && a <= 'z') \
-		|| (a >= 'A' && a <= 'Z')
+#define IS_ALPHA(a) (a >= 'a' && a <= 'z')      \
+        || (a >= 'A' && a <= 'Z')
 
 #define IS_DIGIT(a) a >= '0' && a <= '9'
+
+#define is_hex(a) (a >= '0' && a <= '9')        \
+        || (a >= 'a' && a <= 'f')               \
+        || (a >= 'A' && a <= 'F')
+
+#define is_bin(a) (a == '0' || a == '1')
 
 #define is_whitespace(a) (a == ' ' || a == '\n' || a == '\t')
 #endif
