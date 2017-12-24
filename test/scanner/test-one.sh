@@ -9,7 +9,7 @@ test="t"$1".bc"
 out="t"$1".out"
 org="t"$1".org.out"
 
-../../build/bcc $test > out/t1.out
+../../build/bcc $test > out/$out
 
 if [ $? -ne 0 ]; then
 	rm -f out/$out
