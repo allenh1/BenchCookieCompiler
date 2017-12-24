@@ -1,0 +1,12 @@
+language: cpp
+compiler: gcc
+dist: trusty
+
+script:
+  - make -j$(nproc)
+  - echo "Running linter..."
+  - cd test/lint
+  - ./run-linter.bash
+  - cd ../../
+  - cd test/scanner
+  - ./testall.sh
