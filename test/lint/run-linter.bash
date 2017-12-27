@@ -5,10 +5,18 @@ echo -e "\e[96mLinter Test\e[0m"
 config=test/lint/linux.cfg
 (( errors=0 ))
 
+crusty=$(which uncrustify)
+# make sure we have uncrustify
+if [[ ! -z $crusty ]]; then
+    echo -e "\e[31mPlease install uncrustify!\e[0m"
+    echo -e "\e[31m    sudo apt-get install uncrustify\e[0m"
+    exit 1
+fi
+
 # make sure we are in the right place
 if [[ ! -f LICENSE ]]; then
     echo - "\e[31mRun linter script from the root of the repo.\e[0m"
-    exit 1
+    exit 2
 fi
 
 # Lint the sources.
@@ -23,7 +31,7 @@ for c_file in src/*.c; do
         rm $c_file.uncrustify
         echo "You may apply the patch like this:"
         echo -e "    patch -p1 $c_file < $c_file.patch\e[0m"
-        exit 2
+        exit 3
     fi
     rm $c_file.uncrustify
 done
