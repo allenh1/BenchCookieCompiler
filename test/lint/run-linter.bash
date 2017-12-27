@@ -7,7 +7,7 @@ config=test/lint/linux.cfg
 
 crusty=$(which uncrustify)
 # make sure we have uncrustify
-if [[ ! -z $crusty ]]; then
+if [[ -z $crusty ]]; then
     echo -e "\e[31mPlease install uncrustify!\e[0m"
     echo -e "\e[31m    sudo apt-get install uncrustify\e[0m"
     exit 1
