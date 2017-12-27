@@ -4,9 +4,6 @@ dist: trusty
 
 script:
   - make -j$(nproc)
-  - echo "Running linter..."
-  - cd test/lint
-  - ./run-linter.bash
-  - cd ../../
+  - test/lint/run-linter.bash
   - cd test/scanner
   - ./testall.sh
