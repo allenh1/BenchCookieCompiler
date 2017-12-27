@@ -4,7 +4,7 @@ dist: trusty
 
 install:
   # Get the linter
-  - apt-get install uncrustify
+  - sudo apt-get install uncrustify
 
 script:
   - make -j$(nproc)
