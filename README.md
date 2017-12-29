@@ -38,8 +38,7 @@ Example (fibonacci):
 --------------------
 ```
 func fib [
-   capture self;
-   capture int fn, n;
+   capture <-- { self, int fn, int n };
 
    maybe self ? [
       maybe self.self ? [

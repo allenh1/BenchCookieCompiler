@@ -219,8 +219,8 @@ struct token_list * add_token(
 	size_t len = strlen(tok->image);
 
 	/* allocate new token node */
-	assert(*iter = malloc(sizeof(**iter)));
-	assert((*iter)->tok.image = malloc(len));
+	*iter = malloc(sizeof(**iter));
+	(*iter)->tok.image = malloc(len + 1);
 
 	/* initialize the new node */
 	(*iter)->next = NULL;
@@ -234,9 +234,15 @@ struct token_list * add_token(
 void free_token_list(const struct token_list * list)
 {
 	/* don't free an empty token list */
-	assert(list != NULL);
+	if (NULL == list) {
+		return;
+	}
 
 	struct token_node * const * iter = &(list->head);
-	for (; *(iter) != NULL; iter = &(*iter)->next)
-		__free_token_node(*iter);
+	struct token_node * const * nxt = NULL;
+	for (; *(iter) != NULL; iter = nxt) {
+		nxt = &((*iter)->next);
+		/* TODO(allenh1): why can't this be free'd? */
+		/* free(*iter); */
+	}
 }

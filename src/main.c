@@ -37,6 +37,7 @@ int main(int argc, char ** argv)
 	/* @todo fork GCC to assemble binary */
 
 	free_token_list(tokens);
+	free(tokens);
 	return 0;
 
 error:

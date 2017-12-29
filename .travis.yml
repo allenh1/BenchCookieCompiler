@@ -1,0 +1,13 @@
+language: cpp
+compiler: gcc
+dist: trusty
+
+install:
+  # Get the linter
+  - sudo apt-get install uncrustify
+
+script:
+  - make -j$(nproc)
+  - test/lint/run-linter.bash
+  - cd test/scanner
+  - ./testall.sh
