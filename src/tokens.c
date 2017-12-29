@@ -219,8 +219,8 @@ struct token_list * add_token(
 	size_t len = strlen(tok->image);
 
 	/* allocate new token node */
-	assert(*iter = malloc(sizeof(**iter)));
-	assert((*iter)->tok.image = malloc(len));
+	*iter = malloc(sizeof(**iter));
+	(*iter)->tok.image = malloc(len + 1);
 
 	/* initialize the new node */
 	(*iter)->next = NULL;
