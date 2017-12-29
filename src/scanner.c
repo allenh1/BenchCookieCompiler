@@ -147,7 +147,7 @@ struct token_list * scan(const char * filename)
 	}
 
 	/* read the file */
-	for (; bytes_read = read(fd, source + source_size, 128); )
+	for (; bytes_read = read(fd, source + source_size + 1, 128); )
 		source = realloc(source, source_size += bytes_read);
 	source[source_size++] = '\0';
 
