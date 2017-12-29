@@ -237,6 +237,9 @@ void free_token_list(const struct token_list * list)
 	assert(list != NULL);
 
 	struct token_node * const * iter = &(list->head);
-	for (; *(iter) != NULL; iter = &(*iter)->next)
+	for (; *(iter) != NULL; ) {
+		struct token_node * const * nxt = &(*iter)->next;
 		__free_token_node(*iter);
+		iter = nxt;
+	}
 }
