@@ -234,7 +234,9 @@ struct token_list * add_token(
 void free_token_list(const struct token_list * list)
 {
 	/* don't free an empty token list */
-	assert(list != NULL);
+	if (NULL == list) {
+		return;
+	}
 
 	struct token_node * const * iter = &(list->head);
 	struct token_node * const * nxt = NULL;
