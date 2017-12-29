@@ -146,11 +146,12 @@ void print_token_list(const struct token_list * list);
 #else
 #define __free_token(tok)                       \
         do {                                    \
-                free(tok->image);               \
+                free((tok)->image);             \
         } while(0);
 
 #define __free_token_node(node)                 \
         do {                                    \
+                __free_token(&((node)->tok))    \
                 free(node);                     \
         } while(0);
 #endif

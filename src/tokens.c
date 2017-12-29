@@ -241,7 +241,8 @@ void free_token_list(const struct token_list * list)
 	struct token_node * const * iter = &(list->head);
 	struct token_node * const * nxt = NULL;
 	for (; *(iter) != NULL; iter = nxt) {
-		nxt = &(*iter)->next;
-		__free_token_node(*iter);
+		nxt = &((*iter)->next);
+		/* TODO(allenh1): why can't this be free'd? */
+		/* free(*iter); */
 	}
 }

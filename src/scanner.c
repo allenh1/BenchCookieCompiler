@@ -131,7 +131,8 @@ struct token * get_next_token(const char ** source)
 	} else {
 		fprintf(stderr, "error: invalid token \"%s\"\n", *source);
 		return NULL;
-	} return token;
+	}
+	return token;
 }
 
 struct token_list * scan(const char * filename)
@@ -171,6 +172,7 @@ struct token_list * scan(const char * filename)
 	for (; *iter && (tok = get_next_token((const char**)&iter)); ) {
 		if (tok->tok != NOTOKEN) add_token(tokens, tok);
 		__free_token(tok);
+		free(tok);
 	}
 
 	free(source);
