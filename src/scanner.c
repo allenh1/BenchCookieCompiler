@@ -159,7 +159,6 @@ struct token_list * scan(const char * filename)
 	size_t read = fread(source, sizeof(char), len, fp);
 	if (len != read) {
 		perror("fread");
-		fprintf(stderr, "read: %zd\n", read);
 		exit(4);
 	}
 	fclose(fp);
