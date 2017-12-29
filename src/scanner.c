@@ -136,21 +136,32 @@ struct token * get_next_token(const char ** source)
 
 struct token_list * scan(const char * filename)
 {
-	char * source = calloc(129, sizeof(char));
-	int fd = -1; size_t bytes_read = 0;
-	size_t source_size = 0;
+	char * source = NULL;
+	FILE * fp = NULL;
 
-	if ((fd = open(filename, O_RDONLY, 0600)) == -1) {
-		perror("open");
-		fprintf(stderr, "filename: \"%s\"\n", filename);
+	if (NULL == (fp = fopen(filename, "r"))) {
+		perror("fopen");
+		fprintf(stderr, "Cannot open file '%s'\n", filename);
 		exit(1);
 	}
-
 	/* read the file */
-	for (; bytes_read = read(fd, source + source_size + 1, 128); )
-		source = realloc(source, source_size += bytes_read);
-	source[source_size++] = '\0';
-
+	if (-1 == fseek(fp, 0, SEEK_END)) {
+		perror("fseek");
+		exit(2);
+	}
+	size_t len = ftell(fp);
+	if (-1 == fseek(fp, 0, SEEK_SET)) {
+		perror("fseek");
+		exit(3);
+	}
+	source = calloc(len + 1, sizeof(char));
+	size_t read = fread(source, sizeof(char), len, fp);
+	if (len != read) {
+		perror("fread");
+		fprintf(stderr, "read: %zd\n", read);
+		exit(4);
+	}
+	fclose(fp);
 	/* create our list */
 	struct token_list * tokens = malloc(sizeof(*tokens));
 	tokens->head = NULL;
