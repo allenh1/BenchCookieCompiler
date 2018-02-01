@@ -15,12 +15,29 @@ fi
 
 # make sure we are in the right place
 if [[ ! -f LICENSE ]]; then
-    echo - "\e[31mRun linter script from the root of the repo.\e[0m"
+    echo -e "\e[31mRun linter script from the root of the repo.\e[0m"
     exit 2
 fi
 
 # Lint the sources.
 for c_file in src/*.c; do
+    uncrustify -c $config $c_file
+    dif=$(diff -ur $c_file $c_file.uncrustify)
+
+    if [[ ! -z $dif ]]; then
+        echo -e "\[31m$c_file does not conform to Kernel style!"
+        echo "Patch will be found in $c_file.patch."
+        diff -ur $c_file $c_file.uncrustify > $c_file.patch
+        rm $c_file.uncrustify
+        echo "You may apply the patch like this:"
+        echo -e "    patch -p1 $c_file < $c_file.patch\e[0m"
+        exit 3
+    fi
+    rm $c_file.uncrustify
+done
+
+# Lint the headers
+for c_file in include/*/*.h; do
     uncrustify -c $config $c_file
     dif=$(diff -ur $c_file $c_file.uncrustify)
 
