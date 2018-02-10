@@ -30,6 +30,7 @@ struct token * get_next_token(const char ** source);
 char * strndup(const char * str, size_t bytes);
 char * strdup(const char * str);
 
+/* *INDENT-OFF* */
 /* macro to set the token to a given char */
 #define __set_char_tok(str, t)                          \
 	do {                                            \
@@ -44,9 +45,10 @@ char * strdup(const char * str);
 		token->tok = t;                         \
 		*str += n;                              \
 	} while (0)
+/* *INDENT-ON* */
 
 #ifdef DEBUG
 #define DBG
 #else
-#define DBG for (; 0;)
+#define DBG for (; 0; )
 #endif
