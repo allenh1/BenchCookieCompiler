@@ -5,18 +5,12 @@ sudo: required
 
 install:
   # Get the linter
-  - wget http://allen-software.com/uncrustify.tar.gz
-  - mkdir uncrustify
-  - cd uncrustify
-  - tar -xf ../uncrustify.tar.gz
-  - mkdir build && cd build
-  - cmake .. -CMAKE_INSTALL_PREFIX=/usr; exit 0
-  - make -j$(nproc);
-  - sudo make install
-  - cd ../../ && rm -rf uncrustify
+  - sudo apt-get install uncrustify
 
 script:
   - make -j$(nproc)
   - test/lint/run-linter.bash
+  - cat src/**/*.patch
+  - cat include/**/*.patch
   - cd test/scanner
   - ./testall.sh
