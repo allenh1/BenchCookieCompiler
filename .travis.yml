@@ -10,7 +10,7 @@ install:
   - cd uncrustify
   - tar -xf ../uncrustify.tar.gz
   - mkdir build && cd build
-  - cmake .. -CMAKE_INSTALL_PREFIX=/usr
+  - cmake .. -CMAKE_INSTALL_PREFIX=/usr; exit 0
   - make -j$(nproc);
   - sudo make install
   - cd ../../ && rm -rf uncrustify
