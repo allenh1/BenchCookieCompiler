@@ -35,7 +35,7 @@ char * strdup(const char * str);
 	do {                                            \
 		token->image = strndup((*str)++, 1);    \
 		token->tok = t;                         \
-	} while (0);
+	} while (0)
 
 /* like the above, but eat n chars */
 #define __set_nlen_tok(str, n, t)                       \
@@ -43,7 +43,7 @@ char * strdup(const char * str);
 		token->image = strndup((*str), n);      \
 		token->tok = t;                         \
 		*str += n;                              \
-	} while (0);
+	} while (0)
 
 #ifdef DEBUG
 #define DBG

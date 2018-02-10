@@ -19,3 +19,6 @@ build/%.o: src/%.c $(included_files)
 clean:
 	@rm -r build
 	@rm -f src/*~ include/bcc/*~ *~
+
+lint_check:
+	test/lint/run-linter.bash
