@@ -9,6 +9,7 @@ install:
 
 script:
   - make -j$(nproc)
+  - uncrustify --version
   - test/lint/run-linter.bash
   - cd test/scanner
   - ./testall.sh
