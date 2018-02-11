@@ -70,63 +70,63 @@
 
 /* token containers */
 struct token {
-        char * image;
-        int tok;
+	char * image;
+	int tok;
 };
 
 struct token_node {
-        struct token_node * next;
-        struct token tok;
+	struct token_node * next;
+	struct token tok;
 };
 
 struct token_list {
-        struct token_node * head;
+	struct token_node * head;
 };
 
 /* scanner functions */
-int matches_obracket (const char * str);
-int matches_cbracket (const char * str);
-int matches_obrace (const char * str);
-int matches_cbrace (const char * str);
-int matches_oparen (const char * str);
-int matches_cparen (const char * str);
-int matches_plus (const char * str);
-int matches_minus (const char * str);
-int matches_star (const char * str);
-int matches_semicolon (const char * str);
-int matches_underscore (const char * str);
-int matches_bang (const char * str);
-int matches_func (const char * str);
-int matches_comma (const char * str);
-int matches_fslash (const char * str);
-int matches_bslash (const char * str);
-int matches_ampersand (const char * str);
-int matches_pipe (const char * str);
-int matches_at (const char * str);
-int matches_quote (const char * str);
-int matches_apostrophe (const char * str);
-int matches_alpha (const char * str);
-int matches_digit (const char * str);
-int matches_int (const char * str);
-int matches_bool (const char * str);
-int matches_char (const char * str);
-int matches_double (const char * str);
-int matches_func (const char * str);
-int matches_maybe (const char * str);
-int matches_just (const char * str);
-int matches_or (const char * str);
-int matches_and (const char * str);
-int matches_notoken (const char * str);
-int matches_capture (const char * str);
-int matches_long (const char * str);
-int matches_unsigned (const char * str);
-int matches_question (const char * question);
-int matches_integer (const char * str, char ** img);
-int matches_float (const char * str, char ** img);
+int matches_obracket(const char * str);
+int matches_cbracket(const char * str);
+int matches_obrace(const char * str);
+int matches_cbrace(const char * str);
+int matches_oparen(const char * str);
+int matches_cparen(const char * str);
+int matches_plus(const char * str);
+int matches_minus(const char * str);
+int matches_star(const char * str);
+int matches_semicolon(const char * str);
+int matches_underscore(const char * str);
+int matches_bang(const char * str);
+int matches_func(const char * str);
+int matches_comma(const char * str);
+int matches_fslash(const char * str);
+int matches_bslash(const char * str);
+int matches_ampersand(const char * str);
+int matches_pipe(const char * str);
+int matches_at(const char * str);
+int matches_quote(const char * str);
+int matches_apostrophe(const char * str);
+int matches_alpha(const char * str);
+int matches_digit(const char * str);
+int matches_int(const char * str);
+int matches_bool(const char * str);
+int matches_char(const char * str);
+int matches_double(const char * str);
+int matches_func(const char * str);
+int matches_maybe(const char * str);
+int matches_just(const char * str);
+int matches_or(const char * str);
+int matches_and(const char * str);
+int matches_notoken(const char * str);
+int matches_capture(const char * str);
+int matches_long(const char * str);
+int matches_unsigned(const char * str);
+int matches_question(const char * question);
+int matches_integer(const char * str, char ** img);
+int matches_float(const char * str, char ** img);
 
 /* list functions */
 struct token_list * add_token(struct token_list * list,
-                              const struct token * tok);
+			      const struct token * tok);
 void free_token_list(const struct token_list * list);
 void print_token_list(const struct token_list * list);
 
@@ -134,49 +134,49 @@ void print_token_list(const struct token_list * list);
 #ifdef DEBUG
 /* macro to free a token */
 #define __free_token(tok)                       \
-        do {                                    \
-                free(tok->image);               \
-                tok->image = NULL;              \
-        } while(0);
+	do {                                    \
+		free(tok->image);               \
+		tok->image = NULL;              \
+	} while (0);
 
 #define __free_token_node(node)                 \
-        do {                                    \
-                free(node);                     \
-        } while(0);
+	do {                                    \
+		free(node);                     \
+	} while (0);
 #else
 #define __free_token(tok)                       \
-        do {                                    \
-                free((tok)->image);             \
-        } while(0);
+	do {                                    \
+		free((tok)->image);             \
+	} while (0);
 
 #define __free_token_node(node)                 \
-        do {                                    \
-                __free_token(&((node)->tok))    \
-                free(node);                     \
-        } while(0);
+	do {                                    \
+		__free_token(&((node)->tok))    \
+		free(node);                     \
+	} while (0);
 #endif
 
 #define __matches_char(str, tok)                \
-        do {                                    \
-                return *str == tok;             \
-        } while (0);
+	do {                                    \
+		return *str == tok;             \
+	} while (0);
 
 #define __matches_string(str, key)              \
-        do {                                    \
-                size_t len = strlen(key);       \
-                if (strlen(str) < strlen(key))  \
-                        return 0;               \
-                return !strncmp(str, key, len); \
-        } while (0);
+	do {                                    \
+		size_t len = strlen(key);       \
+		if (strlen(str) < strlen(key))  \
+			return 0;               \
+		return !strncmp(str, key, len); \
+	} while (0);
 
 #define IS_ALPHA(a) (a >= 'a' && a <= 'z')      \
-        || (a >= 'A' && a <= 'Z')
+	|| (a >= 'A' && a <= 'Z')
 
 #define IS_DIGIT(a) a >= '0' && a <= '9'
 
 #define is_hex(a) (a >= '0' && a <= '9')        \
-        || (a >= 'a' && a <= 'f')               \
-        || (a >= 'A' && a <= 'F')
+	|| (a >= 'a' && a <= 'f')               \
+	|| (a >= 'A' && a <= 'F')
 
 #define is_bin(a) (a == '0' || a == '1')
 
