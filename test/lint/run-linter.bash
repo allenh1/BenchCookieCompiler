@@ -37,14 +37,16 @@ for c_file in src/*.c; do
 done
 
 # version check
-temp_file=$(mktemp)
-uncrustify --version > ${temp_file}
-sed -i -e 's/Uncrustify-//g' ${temp_file}
-sed -i -e 's/_[a-zA-Z]//g' ${temp_file}
-version=$(cat ${temp_file})
-rm -f ${temp_file}
+# TODO(allenh1): when travis leaves trusty, switch to this.
+# temp_file=$(mktemp)
+# uncrustify --version > ${temp_file}
+# sed -i -e 's/Uncrustify-//g' ${temp_file}
+# sed -i -e 's/_[a-zA-Z]//g' ${temp_file}
+# version=$(cat ${temp_file})
+# rm -f ${temp_file}
+ver_string=$(uncrustify --version | awk '{print $1}')
 
-if [[ $version < 0.65 ]]; then
+if [[ $ver_string = *'uncrustify'* ]]; then
     echo -e "\e[31mUncrustify cannot test headers!\e[0m"
     echo -e "\e[32mPretending things are fine...\e[0m"
     exit 0
