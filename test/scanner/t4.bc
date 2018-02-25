@@ -1,0 +1,4 @@
+func main(int argc, char ** argv) [
+     func printf;
+     printf("Hello, world!\n");
+]

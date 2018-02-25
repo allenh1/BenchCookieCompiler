@@ -21,6 +21,7 @@
 
 int matches_float(const char * str, char ** img)
 {
+	(void)img;  /* TODO(allenh1): why is this here? */
 	enum states { A, B, C, D, E, F, G, H };
 	enum states state = A;
 	int multiplier = 1;
@@ -89,4 +90,6 @@ int matches_float(const char * str, char ** img)
 			break;
 		}
 	}
+	/* should never get here */
+	return 0;
 }
