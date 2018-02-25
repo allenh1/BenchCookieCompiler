@@ -17,13 +17,16 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include <bcc/tokens.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <fcntl.h>
-#include <float.h>
+
+#include <bcc/identifier.h>
+#include <bcc/integer.h>
+#include <bcc/tokens.h>
+#include <bcc/float.h>
 
 struct token_list * scan(const char * filename);
 struct token * get_next_token(const char ** source);

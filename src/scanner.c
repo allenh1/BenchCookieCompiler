@@ -128,6 +128,10 @@ struct token * get_next_token(const char ** source)
 		*source += imgLen;
 	} else if ((imgLen = matches_float(*source, &tmp))) {
 		__set_nlen_tok(source, imgLen, FLOAT);
+	} else if ((imgLen = matches_identifier(*source, &tmp))) {
+		token->image = tmp;
+		token->tok = NAME;
+		*source += imgLen;
 	} else {
 		fprintf(stderr, "error: invalid token \"%s\"\n", *source);
 		return NULL;

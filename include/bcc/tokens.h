@@ -83,6 +83,9 @@ struct token_list {
 	struct token_node * head;
 };
 
+/* util functions */
+size_t strlen(const char * str);
+
 /* scanner functions */
 int matches_obracket(const char * str);
 int matches_cbracket(const char * str);
@@ -121,8 +124,6 @@ int matches_capture(const char * str);
 int matches_long(const char * str);
 int matches_unsigned(const char * str);
 int matches_question(const char * question);
-int matches_integer(const char * str, char ** img);
-int matches_float(const char * str, char ** img);
 
 /* list functions */
 struct token_list * add_token(struct token_list * list,
